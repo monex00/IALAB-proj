@@ -24,11 +24,3 @@ aggiungi([X], [H|T], L) :-
     X > H,
     aggiungi([X], T, L1),
     append([H], L1, L).
-    
-
-
-
-    
-
-
-
