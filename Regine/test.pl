@@ -16,7 +16,6 @@ minacciate(R, State) :-
     length(R, N),
     write(N).
 
-
 heuristic(State, H) :- 
     findall((R1, R2), (nth1(R1, State, _), nth1(R2, State, _), R1 < R2, minaccia(R1, R2, State)), R),
     length(R, H1),
@@ -26,3 +25,12 @@ heuristic(State, H) :-
 goal(State) :- 
     findall((R1, R2), (nth1(R1, State, _), nth1(R2, State, _), R1 < R2, minaccia(R1, R2, State)), R),
     length(R, 0).
+
+%possibili azioni
+copy(L,R) :- accCp(L,R).
+accCp([],[]).
+accCp([H|T1],[H|T2]) :- accCp(T1,T2).
+
+sposta_colonna(R, C, State, NewState) :- 
+    copy(State, NewState),
+    nth1(R, NewState, C).
