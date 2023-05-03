@@ -31,7 +31,7 @@ def AStarSearch(state, heuristic):
     return None
 
 def main():
-    state = [0]
+    state = [0,1,2,3]
     solution = AStarSearch(state, heuristic)
     if solution:
         print(solution)
