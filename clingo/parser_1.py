@@ -1,16 +1,12 @@
 import re
 
-# Apriamo il file e leggiamo il contenuto
 with open("in.txt", "r") as f:
     content = f.read()
 
-# Cerchiamo tutti i match nel contenuto del file
 matches = re.findall(r"giocaControAIn\(giocaContro\(([a-zA-Z0-9]+),([a-zA-Z0-9]+),(\d+)\),(\d+)\)", content)
 
-# Creiamo un dizionario per raggruppare i match per girone
 matches_per_girone = {}
 
-# Iteriamo su tutti i match trovati e li inseriamo nel dizionario in base al girone
 for match in matches:
     squadra1 = match[0]
     squadra2 = match[1]
@@ -22,7 +18,6 @@ for match in matches:
         
     matches_per_girone[girone].append((squadra1, squadra2, stadio))
 
-# Iteriamo sul dizionario ordinando i match per girone e stampandoli
 for girone, matches in sorted(matches_per_girone.items()):
     print(f"Girone {girone}:")
     ripetizioni = {}
