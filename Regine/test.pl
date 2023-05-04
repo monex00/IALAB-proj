@@ -9,6 +9,16 @@ minaccia_diagonale(R1, R2, State) :- nth1(R1, State, C1), nth1(R2, State, C2), D
 minaccia(R1, R2, State) :- 
     minaccia_colonna(R1, R2, State);
     minaccia_diagonale(R1, R2, State).
+
+
+/*
+minaccia(R1, R2, State) :- 
+    minaccia_colonna(R1, R2, State).
+
+minaccia(R1, R2, State) :- 
+    minaccia_diagonale(R1, R2, State).
+*/
+
     
 %scorro state a coppie e verifico se le regine si minacciano con findall
 minacciate(R, State) :- 
