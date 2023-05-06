@@ -1,7 +1,9 @@
 prova(Cammino):-
     iniziale(S0),
     risolvi([[S0,[]]],[],CamminoAlContrario),
-    inverti(CamminoAlContrario,Cammino).
+    inverti(CamminoAlContrario,Cammino),
+    write(Cammino).
+    
 
 % risolvi([[S,PathToS]|Coda],Visitati,Cammino):-
 risolvi([[S,PathToS]|_],_,PathToS):-finale(S),!.

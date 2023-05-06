@@ -87,7 +87,10 @@ pos_finale = (int(pos_finale_match.group(1)), int(pos_finale_match.group(2)))
 celle_occupate = [(int(x[0]), int(x[1])) for x in celle_occupate_matches]
 wormholes = [((int(x[0]), int(x[1])), (int(x[2]), int(x[3]))) for x in wormholes_matches]
 
-cammino = ["su", "su", "su", "tp", "dx"]
+with open('cammino.txt', 'r') as file:
+    input_text = file.read()
+
+cammino = input_text.split(',')
 # Disegno del labirinto
 draw_maze(num_righe, num_colonne, pos_iniziale, pos_finale, celle_occupate, wormholes,cammino)
 

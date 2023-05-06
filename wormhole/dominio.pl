@@ -5,7 +5,6 @@ iniziale(pos(4,2)).
 finale(pos(7,9)).
 
 occupata(pos(7,1)).
-occupata(pos(1,5)).
 occupata(pos(7,2)).
 occupata(pos(7,3)).
 occupata(pos(7,4)).
@@ -23,4 +22,5 @@ occupata(pos(8,7)).
 occupata(pos(4,8)).
 occupata(pos(4,9)).
 occupata(pos(4,10)).
-wormhole(pos(1,2),pos(7,8)).
+wormhole(pos(1,2),pos(1,8)).
+wormhole(pos(5,6),pos(9,3)).
