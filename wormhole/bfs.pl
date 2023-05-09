@@ -1,13 +1,19 @@
 prova(Cammino):-
    iniziale(S0),
    risolvi([[S0,[]]],[],CamminoAlContrario),
-   inverti(CamminoAlContrario,Cammino).
+   inverti(CamminoAlContrario,Cammino),
+   write(Cammino).
 
 % risolvi([[S,PathToS]|Coda],Visitati,Cammino):-
 
-risolvi([[S,PathToS]|_],_,PathToS):-finale(S),!.
+risolvi([[S,PathToS]|_],_,PathToS):-
+    findall(finale(S),finale(S),L),
+    length(L,Len),
+    write(S),nl,
+    Len > 0,!.
 risolvi([[S,PathToS]|Coda],Visitati,Cammino):-
     findall(Az,applicabile(Az,S),ListaAzioniApplicabili),
+    write(ListaAzioniApplicabili), nl,
     generaStatiFigli(S,ListaAzioniApplicabili,Visitati,PathToS,ListaNuoviStati),
     append(Coda,ListaNuoviStati,NuovaCoda),
     risolvi(NuovaCoda,[S|Visitati],Cammino).

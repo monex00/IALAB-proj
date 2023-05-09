@@ -70,7 +70,6 @@ def get_coordinate(posizione):
 # Lettura del file di input
 with open('dominio.pl', 'r') as file:
     input_text = file.read()
-
 # Estrazione delle informazioni utilizzando le regex
 num_righe_match = re.search(r'num_righe\((\d+)\)', input_text)
 num_colonne_match = re.search(r'num_colonne\((\d+)\)', input_text)
@@ -78,7 +77,6 @@ pos_iniziale_match = re.search(r'iniziale\(pos\((\d+),(\d+)\)\)', input_text)
 pos_finale_match = re.search(r'finale\(pos\((\d+),(\d+)\)\)', input_text)
 celle_occupate_matches = re.findall(r'occupata\(pos\((\d+),(\d+)\)\)', input_text)
 wormholes_matches = re.findall(r'wormhole\(pos\((\d+),(\d+)\),pos\((\d+),(\d+)\)\)', input_text)
-
 # Estrazione dei valori dalle corrispondenze delle regex
 num_righe = int(num_righe_match.group(1))
 num_colonne = int(num_colonne_match.group(1))
