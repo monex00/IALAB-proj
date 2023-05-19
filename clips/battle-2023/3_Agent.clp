@@ -9,6 +9,7 @@
 )
 
 
+;EXCLUSION RULES
 (defrule exlude-cells-row (declare (salience 40))
 	(k-per-row (row ?r) (num ?nr &:(= ?nr 0)))
 	(k-per-col (col ?c))
@@ -28,13 +29,157 @@
 	(assert (k-cell (x ?r) (y ?c) (content water)))
 )
 
-(defrule exlude-cell-sub (declare (salience 40))
-	(k-cell (x ?x) (y ?y) (content sub))
-	(not (k-cell (x ?x1&:(= ?x1 (abs (- ?x ?x1))) (y ?y1&:(= ?y1 (+ ?y 1))) (content ?t)))
+(defrule unify-kcell (declare (salience 40))
+	?r <- (k-cell (x ?x ) (y ?y) (content water))
+	?r1 <- (k-cell (x ?x1 &:(eq ?x ?x1)) (y ?y1&: (eq ?y ?y1) ) (content water))
+    (test(neq ?r ?r1))
 =>
-
+	retract ?r1
 )
 
+
+(defrule exlude-cell-sub-1 (declare (salience 40))
+	(or
+		(k-cell (x ?x) (y ?y) (content sub))
+		(k-cell (x ?x) (y ?y) (content top))
+		(k-cell (x ?x) (y ?y) (content right))
+		(k-cell (x ?x) (y ?y) (content bot))
+		(k-cell (x ?x) (y ?y) (content left))
+		(k-cell (x ?x) (y ?y) (content middle))
+	)
+	(and
+		(not (k-cell (x ?x1&: (= ?x1 (+ ?x 1))) (y ?y1&: (= ?y1 (+ ?y 1))) (content ?t)))
+		(test (< (+ ?x 1) 9))
+		(test (< (+ ?y 1) 9))
+	)
+
+=>
+	(assert (k-cell (x (+ ?x 1)) (y (+ ?y 1)) (content water)))
+	(printout t "I know that cell " ?x ", " ?y " is empty around sub." crlf)
+)
+
+(defrule exlude-cell-sub-2 (declare (salience 40))
+	(or
+		(k-cell (x ?x) (y ?y) (content sub))
+		(k-cell (x ?x) (y ?y) (content top))
+		(k-cell (x ?x) (y ?y) (content right))
+		(k-cell (x ?x) (y ?y) (content bot))
+		(k-cell (x ?x) (y ?y) (content left))
+		(k-cell (x ?x) (y ?y) (content middle))
+	)
+	(and
+		(not (k-cell (x ?x1&: (= ?x1 (+ ?x 1))) (y ?y1&: (= ?y1 (- ?y 1))) (content ?t)))
+		(test (< (+ ?x 1) 9))
+		(test (>= (- ?y 1) 0))
+	)
+
+=>
+	(assert (k-cell (x (+ ?x 1)) (y (- ?y 1)) (content water)))
+	(printout t "I know that cell " ?x ", " ?y " is empty around sub." crlf)
+)
+
+(defrule exlude-cell-sub-3 (declare (salience 40))
+	(or
+		(k-cell (x ?x) (y ?y) (content sub))
+		(k-cell (x ?x) (y ?y) (content top))
+		(k-cell (x ?x) (y ?y) (content right))
+		(k-cell (x ?x) (y ?y) (content bot))
+		(k-cell (x ?x) (y ?y) (content left))
+		(k-cell (x ?x) (y ?y) (content middle))
+	)
+	(and
+		(not (k-cell (x ?x1&: (= ?x1 (- ?x 1))) (y ?y1&: (= ?y1 (+ ?y 1))) (content ?t)))
+		(test (>= (- ?x 1) 0))
+		(test (< (+ ?y 1) 9))
+	)
+=>
+	(assert (k-cell (x (- ?x 1)) (y (+ ?y 1)) (content water)))
+	(printout t "I know that cell " ?x ", " ?y " is empty around sub." crlf)
+)
+(defrule exlude-cell-sub-4 (declare (salience 40))
+	(or
+		(k-cell (x ?x) (y ?y) (content sub))
+		(k-cell (x ?x) (y ?y) (content top))
+		(k-cell (x ?x) (y ?y) (content right))
+		(k-cell (x ?x) (y ?y) (content bot))
+		(k-cell (x ?x) (y ?y) (content left))
+		(k-cell (x ?x) (y ?y) (content middle))
+	)
+	(and
+		(not (k-cell (x ?x1&: (= ?x1 (- ?x 1))) (y ?y1&: (= ?y1 (- ?y 1))) (content ?t)))
+		(test (>= (- ?x 1) 0))
+		(test (>= (- ?y 1) 0))
+	)
+
+=>
+	(assert (k-cell (x (- ?x 1)) (y (- ?y 1)) (content water)))
+	(printout t "I know that cell " ?x ", " ?y " is empty around sub." crlf)
+)
+(defrule exlude-cell-sub-5 (declare (salience 40))
+	(or
+		(k-cell (x ?x) (y ?y) (content sub))
+		(k-cell (x ?x) (y ?y) (content right))
+		(k-cell (x ?x) (y ?y) (content top))
+		(k-cell (x ?x) (y ?y) (content bot))
+	)
+	(and
+		(not (k-cell (x ?x1&: (= ?x1 ?x)) (y ?y1&: (= ?y1 (+ ?y 1))) (content ?t)))
+		(test (< (+ ?y 1) 9))
+	)
+
+=>
+	(assert (k-cell (x ?x) (y (+ ?y 1)) (content water)))
+	(printout t "I know that cell " ?x ", " ?y " is empty around sub." crlf)
+)
+(defrule exlude-cell-sub-6 (declare (salience 40))
+	(or
+		(k-cell (x ?x) (y ?y) (content sub))
+		(k-cell (x ?x) (y ?y) (content left))
+		(k-cell (x ?x) (y ?y) (content top))
+		(k-cell (x ?x) (y ?y) (content bot))
+	)
+	(and
+		(not (k-cell (x ?x1&: (= ?x1 ?x)) (y ?y1&: (= ?y1 (- ?y 1))) (content ?t)))
+		(test (>= (- ?y 1) 0))
+	)
+
+=>
+	(assert (k-cell (x ?x) (y (- ?y 1)) (content water)))
+	(printout t "I know that cell " ?x ", " ?y " is empty around sub." crlf)
+)
+(defrule exlude-cell-sub-7 (declare (salience 40))
+	(or
+		(k-cell (x ?x) (y ?y) (content sub))
+		(k-cell (x ?x) (y ?y) (content right))
+		(k-cell (x ?x) (y ?y) (content left))
+		(k-cell (x ?x) (y ?y) (content top))
+	)
+	(and
+		(not (k-cell (x ?x1&: (= ?x1 (- ?x 1))) (y ?y1&: (= ?y1 ?y)) (content ?t)))
+		(test (>= (- ?x 1) 0))
+	)
+
+=>
+	(assert (k-cell (x (- ?x 1)) (y ?y) (content water)))
+	(printout t "I know that cell " ?x ", " ?y " is empty around sub." crlf)
+)
+
+(defrule exlude-cell-sub-8 (declare (salience 40))
+	(or 
+		(k-cell (x ?x) (y ?y) (content sub))
+		(k-cell (x ?x) (y ?y) (content right))
+		(k-cell (x ?x) (y ?y) (content left))
+		(k-cell (x ?x) (y ?y) (content bot))
+	)
+	(and
+		(not (k-cell (x ?x1&: (= ?x1 (+ ?x 1))) (y ?y1&: (= ?y1 ?y )) (content ?t)))
+		(test (< (+ ?x 1) 9))
+	)
+
+=>
+	(assert (k-cell (x (+ ?x 1)) (y ?y) (content water)))
+	(printout t "I know that cell " ?x ", " ?y " is empty around sub." crlf)
+)
 
 (defrule guess-known (declare (salience 40))
 	(status (step ?s)(currently running))
