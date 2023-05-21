@@ -18,7 +18,6 @@ risolvi([[S,PathToS]|Coda],Visitati,Cammino):-
     findall([Az, H], (applicabile(Az,S), trasforma(Az, S, Snuovo), calcolaEuristica(Snuovo, CostInc, H)), ListaAzioniEuristiche),
     % write(ListaAzioniEuristiche), nl,
     sort(2, @=<, ListaAzioniEuristiche, SortedAzioniEuristiche),
-    % write(SortedAzioniEuristiche), nl, nl,
     generaStatiFigli(S, SortedAzioniEuristiche, Visitati, PathToS, ListaNuoviStati),
     append(Coda,ListaNuoviStati,NuovaCoda),
     risolvi(NuovaCoda,[S|Visitati],Cammino).
@@ -35,7 +34,7 @@ inverti(L,InvL):-inver(L,[],InvL).
 inver([],Temp,Temp).
 inver([H|T],Temp,Ris):-inver(T,[H|Temp],Ris).
 
-% Esempio di funzione euristica (distanza Manhattan)
+% Calcola la l'euristica per il finale migliore, quello stimato più vicino 
 calcolaEuristica(pos(X,Y), Costo, H) :-
   findall(finale(pos(Xf, Yf)),finale(pos(Xf, Yf)), [Testa | Coda]),
   returnMaggiore(pos(X,Y), [Testa | Coda], Costo, H), !.

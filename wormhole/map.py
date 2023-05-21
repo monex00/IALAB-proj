@@ -71,7 +71,11 @@ def get_coordinate(posizione):
     return int(posizione[0]), int(posizione[1])
 
 # Lettura del file di input
-with open('dominioDoppiaUscita.pl', 'r') as file:
+nomeFile = input("Inserisci il nome del file di input: ")
+if nomeFile == "":
+    nomeFile = "dominioTriplaUscita.pl"
+
+with open(nomeFile, 'r') as file:
     input_text = file.read()
 # Estrazione delle informazioni utilizzando le regex
 num_righe_match = re.search(r'num_righe\((\d+)\)', input_text)
