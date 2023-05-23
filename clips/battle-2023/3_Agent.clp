@@ -8,12 +8,18 @@
 	(slot y)
 )
 
+(deftemplate secure-guess
+	(slot x)
+	(slot y)
+)
+
 
 ;EXCLUSION RULES
 (defrule exlude-cells-row (declare (salience 40))
 	(k-per-row (row ?r) (num ?nr &:(= ?nr 0)))
 	(k-per-col (col ?c))
 	(not (k-cell (x ?r) (y ?c) (content ?t)))
+	(not (secure-guess (x ?r) (y ?c)))
 =>
 	(printout t "I know that cell " ?r ", " ?c " is empty." crlf)
 	(assert (k-cell (x ?r) (y ?c) (content water)))
@@ -24,6 +30,7 @@
 	(k-per-row (row ?r))
 	(k-per-col (col ?c) (num ?nc &:(= ?nc 0)))
 	(not (k-cell (x ?r) (y ?c) (content ?t)))
+	(not (secure-guess (x ?r) (y ?c)))
 =>
 	(printout t "I know that cell " ?r ", " ?c " is empty." crlf)
 	(assert (k-cell (x ?r) (y ?c) (content water)))
@@ -46,6 +53,7 @@
 		(k-cell (x ?x) (y ?y) (content bot))
 		(k-cell (x ?x) (y ?y) (content left))
 		(k-cell (x ?x) (y ?y) (content middle))
+		(secure-guess (x ?x) (y ?y))
 	)
 	(and
 		(not (k-cell (x ?x1&: (= ?x1 (+ ?x 1))) (y ?y1&: (= ?y1 (+ ?y 1))) (content ?t)))
@@ -66,6 +74,7 @@
 		(k-cell (x ?x) (y ?y) (content bot))
 		(k-cell (x ?x) (y ?y) (content left))
 		(k-cell (x ?x) (y ?y) (content middle))
+		(secure-guess (x ?x) (y ?y))
 	)
 	(and
 		(not (k-cell (x ?x1&: (= ?x1 (+ ?x 1))) (y ?y1&: (= ?y1 (- ?y 1))) (content ?t)))
@@ -86,6 +95,7 @@
 		(k-cell (x ?x) (y ?y) (content bot))
 		(k-cell (x ?x) (y ?y) (content left))
 		(k-cell (x ?x) (y ?y) (content middle))
+		(secure-guess (x ?x) (y ?y))
 	)
 	(and
 		(not (k-cell (x ?x1&: (= ?x1 (- ?x 1))) (y ?y1&: (= ?y1 (+ ?y 1))) (content ?t)))
@@ -104,6 +114,7 @@
 		(k-cell (x ?x) (y ?y) (content bot))
 		(k-cell (x ?x) (y ?y) (content left))
 		(k-cell (x ?x) (y ?y) (content middle))
+		(secure-guess (x ?x) (y ?y))
 	)
 	(and
 		(not (k-cell (x ?x1&: (= ?x1 (- ?x 1))) (y ?y1&: (= ?y1 (- ?y 1))) (content ?t)))
@@ -178,6 +189,7 @@
 
 =>
 	(assert (k-cell (x (+ ?x 1)) (y ?y) (content water)))
+
 	(printout t "I know that cell " ?x ", " ?y " is empty around sub." crlf)
 )
 
@@ -191,15 +203,58 @@
 	(pop-focus)
 )
 
+(defrule known-guess-1 (declare (salience 40))
+	(status (step ?s)(currently running))
+	(k-cell (x ?x) (y ?y) (content ?t & top))
+	(not (exec (action guess) (x ?x1 &: (= ?x1 (+ ?x 1))) (y ?y)))
+=> 
+	(assert (secure-guess (x (+ ?x 1)) (y ?y)))
+	(assert (exec (step ?s) (action guess) (x (+ ?x 1)) (y ?y)))
+	(pop-focus)
+)
+
+(defrule known-guess-2 (declare (salience 40))
+	(status (step ?s)(currently running))
+	(k-cell (x ?x) (y ?y) (content ?t & bot))
+	(not (exec (action guess) (x ?x1 &: (= ?x1 (- ?x 1))) (y ?y)))
+
+=> 
+	(assert (secure-guess (x (- ?x 1)) (y ?y)))
+	(assert (exec (step ?s) (action guess) (x (- ?x 1)) (y ?y)))
+	(pop-focus)
+)
+
+(defrule known-guess-3 (declare (salience 40))
+	(status (step ?s)(currently running))
+	(k-cell (x ?x) (y ?y) (content ?t & right))
+	(not (exec (action guess) (x ?x) (y ?y1 &: (= ?y1 (- ?y 1)))))
+
+=> 
+	(assert (secure-guess (x ?x) (y (- ?y 1))))
+	(assert (exec (step ?s) (action guess) (x ?x) (y (- ?y 1))))
+	(pop-focus)
+)
+
+(defrule known-guess-4 (declare (salience 40))
+	(status (step ?s)(currently running))
+	(k-cell (x ?x) (y ?y) (content ?t & left))
+	(not (exec (action guess) (x ?x) (y ?y1 &: (= ?y1 (+ ?y 1)))))
+=> 
+	(assert (secure-guess (x ?x) (y (+ ?y 1))))
+	(assert (exec (step ?s) (action guess) (x ?x) (y (+ ?y 1))))
+	(pop-focus)
+)
+
 
 
 (defrule update-krow-kcol (declare (salience 40))
-	(k-cell (x ?x) (y ?y) (content ?t))
+	(or
+		(secure-guess (x ?x) (y ?y))
+		(k-cell (x ?x) (y ?y) (content ?t & ~water))
+	)
 	(not (modified (x ?x) (y ?y)))
-	;; (exec (action ?a & fire|guess) (x ?x) (y ?y))
 	?r <- (k-per-row (row ?x) (num ?nr & :(> ?nr 0)))
 	?c <- (k-per-col (col ?y) (num ?nc & :(> ?nc 0)))
-
 =>	
 	(modify ?r (num (- ?nr 1)))
 	(modify ?c (num (- ?nc 1)))
@@ -256,142 +311,4 @@
 	(assert (exec (step ?s) (action unguess) (x 0) (y 0)))
      (pop-focus)
 
-)
-
-
-
-(defrule inerzia
-	(status (step ?s)(currently running))
-	(not (exec  (action fire) (x 2) (y 4)) )
-=>
-	(assert (exec (step ?s) (action fire) (x 2) (y 4)))
-     (pop-focus)
-
-)
-
-(defrule inerzia1
-	(status (step ?s)(currently running))
-	(not (exec  (action fire) (x 7) (y 4)))
-=>
-
-
-	(assert (exec (step ?s) (action fire) (x 7) (y 4)))
-     (pop-focus)
-
-)
-
-(defrule inerzia2
-	(status (step ?s)(currently running))
-	(not (exec  (action fire) (x 2) (y 6)))
-
-=>
-
-	(assert (exec (step ?s) (action fire) (x 2) (y 6)))
-     (pop-focus)
-
-)
-
-(defrule inerzia3
-	(status (step ?s)(currently running))
-	(not (exec  (action fire) (x 1) (y 2)))
-
-=>
-	(assert (exec (step ?s) (action fire) (x 1) (y 2)))
-     (pop-focus)
-)
-
-
-(defrule inerzia4
-	(status (step ?s)(currently running))
-	(not (exec (action fire) (x 7) (y 5)))
-=>
-
-	(assert (exec (step ?s) (action fire) (x 7) (y 5)))
-     (pop-focus)
-
-
-
-)
-
-(defrule inerzia5
-	(status (step ?s)(currently running))
-
-	(not (exec (action fire) (x 8) (y 3)))
-=>
-
-
-
-	(assert (exec (step ?s) (action fire) (x 8) (y 3)))
-     (pop-focus)
-
-
-)
-
-
-(defrule inerzia6
-	(status (step ?s)(currently running))
-		(not (exec  (action fire) (x 8) (y 4)))
-=>
-
-
-	(assert (exec (step ?s) (action fire) (x 8) (y 4)))
-     (pop-focus)
-
-	)
-
-
-
-
-
-(defrule inerzia7
-	(status (step ?s)(currently running))
-		(not (exec  (action fire) (x 8) (y 5)))
-=>
-
-
-	(assert (exec (step ?s) (action fire) (x 8) (y 5)))
-     (pop-focus)
-
-)
-
-
-(defrule inerzia8
-	(status (step ?s)(currently running))
-		(not (exec  (action fire) (x 6) (y 9)))
-=>
-
-
-	(assert (exec (step ?s) (action fire) (x 6) (y 9)))
-     (pop-focus)
-)
-
-
-(defrule inerzia9
-	(status (step ?s)(currently running))
-		(not (exec  (action fire) (x 7) (y 9)))
-=>
-
-
-	(assert (exec (step ?s) (action fire) (x 7) (y 9)))
-     (pop-focus)
-)
-
-(defrule inerzia10 (declare (salience 30))
-	(status (step ?s)(currently running))
-		(not (exec  (action fire) (x 6) (y 5)))
-=>
-
-
-	(assert (exec (step ?s) (action fire) (x 6) (y 5)))
-     (pop-focus)
-)
-
-(defrule inerzia11 (declare (salience 30))
-	(status (step ?s)(currently running))
-		(not (exec  (action guess) (x 7) (y 7)))
-=>
-
-
-	(assert (exec (step ?s) (action guess) (x 7) (y 7)))
-     (pop-focus)
 )
