@@ -13,6 +13,29 @@
 	(slot y)
 )
 
+(deftemplate num-cell
+	(slot x)
+	(slot y)
+	(slot num) ;somma k per riga/colonna
+)
+
+(defrule init-num-cell (declare (salience 50))
+	(k-per-row (row ?r) (num ?n1))
+	(k-per-col (col ?c) (num ?n2))
+	(not (num-cell (x ?r) (y ?c)))
+=>
+	(assert (num-cell (x ?r) (y ?c) (num (+ ?n1 ?n2))))
+)
+
+(defrule modif-num-cell (declare (salience 10))
+	(k-per-row (row ?r) (num ?n1))
+	(k-per-col (col ?c) (num ?n2))
+	?cell <- (num-cell (x ?r) (y ?c) (num ?n3 &: (neq ?n3 (+ ?n1 ?n2))))
+=>
+	(retract ?cell)
+	(assert (num-cell (x ?r) (y ?c) (num (+ ?n1 ?n2))))
+)
+
 
 ;EXCLUSION RULES
 (defrule exlude-cells-row (declare (salience 40))
@@ -245,6 +268,155 @@
 	(pop-focus)
 )
 
+(defrule known-guess-middle-border-1 (declare (salience 40))
+	(status (step ?s)(currently running))
+	(k-cell (x ?x) (y ?y & 0|9) (content ?t & middle))
+	(not (exec (action guess) (x ?x1 &: (= ?x1 (+ ?x 1))) (y ?y)))
+=> 
+	(assert (secure-guess (x (+ ?x 1)) (y ?y)))
+	(assert (exec (step ?s) (action guess) (x (+ ?x 1)) (y ?y)))
+	(pop-focus)
+)
+
+
+(defrule known-guess-middle-border-2 (declare (salience 40))
+	(status (step ?s)(currently running))
+	(k-cell (x ?x) (y ?y & 0|9) (content ?t & middle))
+	(not (exec (action guess) (x ?x1 &: (= ?x1 (- ?x 1))) (y ?y)))
+=> 
+	(assert (secure-guess (x (- ?x 1)) (y ?y)))
+	(assert (exec (step ?s) (action guess) (x (- ?x 1)) (y ?y)))
+	(pop-focus)
+)
+
+(defrule known-guess-middle-border-3 (declare (salience 40))
+	(status (step ?s)(currently running))
+	(k-cell (x ?x & 0|9) (y ?y) (content ?t & middle))
+	(not (exec (action guess) (x ?x) (y ?y1 &: (= ?y1 (+ ?y 1)))))
+=> 
+	(assert (secure-guess (x ?x) (y (+ ?y 1))))
+	(assert (exec (step ?s) (action guess) (x ?x) (y (+ ?y 1))))
+	(pop-focus)
+)
+
+(defrule known-guess-middle-border-4 (declare (salience 40))
+	(status (step ?s)(currently running))
+	(k-cell (x ?x & 0|9) (y ?y) (content ?t & middle))
+	(not (exec (action guess) (x ?x) (y ?y1 &: (= ?y1 (- ?y 1)))))
+=> 
+	(assert (secure-guess (x ?x) (y (- ?y 1))))
+	(assert (exec (step ?s) (action guess) (x ?x) (y (- ?y 1))))
+	(pop-focus)
+)
+
+
+(defrule guess-middle-hor1 (declare (salience 40))
+	(status (step ?s)(currently running))
+	(k-cell (x ?x & ~0 & ~9) (y ?y & ~0 & ~9) (content ?t & middle))
+	(not (exec (action guess) (x ?x) (y ?y1 &:(= ?y1 (- ?y 1) ))))
+	(or
+		(not (exec (action guess) (x ?x1 &:(= ?x1 (- ?x 1) )) (y ?y )))
+		(not (exec (action guess) (x ?x1 &:(= ?x1 (+ ?x 1) )) (y ?y )))	
+	)
+	
+
+	(or
+		(or
+			(k-cell (x ?x1 &: (= ?x1 (+ ?x 1))) (y ?y) (content ?t1 & water))
+			(k-cell (x ?x2 &: (= ?x2 (- ?x 1))) (y ?y) (content ?t2 & water))
+		)
+		(and
+			(num-cell (x ?x3 &: (= ?x3 (+ ?x 1))) (y ?y) (num ?num1))
+			(num-cell (x ?x4 &: (= ?x4 (- ?x 1))) (y ?y) (num ?num2))
+			(num-cell (x ?x) (y ?y3 &: (= ?y3 (- ?y 1))) (num ?num3 &: (>= ?num3 ?num2)&: (>= ?num3 ?num1)))
+			(num-cell (x ?x) (y ?y4 &: (= ?y4 (+ ?y 1))) (num ?num4 &: (>= ?num4 ?num1)&: (>= ?num4 ?num2)))		
+		)
+	)
+=> 
+	(assert (secure-guess (x ?x) (y (- ?y 1))))
+	(assert (exec (step ?s) (action guess) (x ?x) (y (- ?y 1))))
+	(pop-focus)
+)
+
+(defrule guess-middle-hor2 (declare (salience 40))
+	(status (step ?s)(currently running))
+	(k-cell (x ?x & ~0 & ~9) (y ?y & ~0 & ~9) (content ?t & middle))
+	(not (exec (action guess) (x ?x) (y ?y1 &:(= ?y1 (+ ?y 1) ))))
+	(or
+		(not (exec (action guess) (x ?x1 &:(= ?x1 (- ?x 1) )) (y ?y )))
+		(not (exec (action guess) (x ?x1 &:(= ?x1 (+ ?x 1) )) (y ?y )))	
+	)
+	(or
+		(or
+			(k-cell (x ?x1 &: (= ?x1 (+ ?x 1))) (y ?y) (content ?t1 & water))
+			(k-cell (x ?x2 &: (= ?x2 (- ?x 1))) (y ?y) (content ?t2 & water))
+		)
+		(and
+			(num-cell (x ?x3 &: (= ?x3 (+ ?x 1))) (y ?y) (num ?num1))
+			(num-cell (x ?x4 &: (= ?x4 (- ?x 1))) (y ?y) (num ?num2))
+			(num-cell (x ?x) (y ?y3 &: (= ?y3 (- ?y 1))) (num ?num3 &: (>= ?num3 ?num2) &: (>= ?num3 ?num1)))
+			(num-cell (x ?x) (y ?y4 &: (= ?y4 (+ ?y 1))) (num ?num4 &: (>= ?num4 ?num1) &: (>= ?num4 ?num2)))
+		)
+	)
+=> 
+	(assert (secure-guess (x ?x) (y (+ ?y 1))))
+	(assert (exec (step ?s) (action guess) (x ?x) (y (+ ?y 1))))
+	(pop-focus)
+)
+
+(defrule guess-middle-ver1 (declare (salience 40))
+	(status (step ?s)(currently running))
+	(k-cell (x ?x & ~0 & ~9) (y ?y & ~0 & ~9) (content ?t & middle))
+	(not (exec (action guess) (x ?x1 &:(= ?x1 (- ?x 1) )) (y ?y )))
+	(or
+		(not (exec (action guess) (x ?x) (y ?y1 &:(= ?y1 (- ?y 1) ))))
+		(not (exec (action guess) (x ?x) (y ?y1 &:(= ?y1 (+ ?y 1) ))))
+	)
+
+	(or
+		(or
+			(k-cell (x ?x1 &: (= ?x1 (+ ?x 1))) (y ?y) (content ?t1 & water))
+			(k-cell (x ?x2 &: (= ?x2 (- ?x 1))) (y ?y) (content ?t2 & water))
+		)
+		(and
+			(num-cell (x ?x) (y ?y3 &: (= ?y3 (- ?y 1))) (num ?num3 ))
+			(num-cell (x ?x) (y ?y4 &: (= ?y4 (+ ?y 1))) (num ?num4 ))
+			(num-cell (x ?x3 &: (= ?x3 (+ ?x 1))) (y ?y) (num ?num1&: (>= ?num1 ?num3) &: (>= ?num1 ?num4)))
+			(num-cell (x ?x4 &: (= ?x4 (- ?x 1))) (y ?y) (num ?num2&: (>= ?num2 ?num3) &: (>= ?num2 ?num4)))		
+		)
+	)
+=> 
+	(assert (secure-guess (x (- ?x 1)) (y ?y)))
+	(assert (exec (step ?s) (action guess) (x (- ?x 1)) (y ?y)))
+	(pop-focus)
+)
+
+(defrule guess-middle-ver2 (declare (salience 40))
+	(status (step ?s)(currently running))
+	(k-cell (x ?x & ~0 & ~9) (y ?y & ~0 & ~9) (content ?t & middle))
+	(not (exec (action guess) (x ?x1 &:(= ?x1 (+ ?x 1) )) (y ?y )))
+	(or
+		(not (exec (action guess) (x ?x) (y ?y1 &:(= ?y1 (- ?y 1) ))))
+		(not (exec (action guess) (x ?x) (y ?y1 &:(= ?y1 (+ ?y 1) ))))
+	)
+	(or
+		(or
+			(k-cell (x ?x1 &: (= ?x1 (+ ?x 1))) (y ?y) (content ?t1 & water))
+			(k-cell (x ?x2 &: (= ?x2 (- ?x 1))) (y ?y) (content ?t2 & water))
+		)
+		(and
+			
+			(num-cell (x ?x) (y ?y3 &: (= ?y3 (- ?y 1))) (num ?num3 ))
+			(num-cell (x ?x) (y ?y4 &: (= ?y4 (+ ?y 1))) (num ?num4 ))
+			(num-cell (x ?x3 &: (= ?x3 (+ ?x 1))) (y ?y) (num ?num1&: (>= ?num1 ?num3) &: (>= ?num1 ?num4)))
+			(num-cell (x ?x4 &: (= ?x4 (- ?x 1))) (y ?y) (num ?num2&: (>= ?num2 ?num3) &: (>= ?num2 ?num4)))
+		)
+	)
+=> 
+	(assert (secure-guess (x (+ ?x 1)) (y ?y)))
+	(assert (exec (step ?s) (action guess) (x (+ ?x 1)) (y ?y)))
+	(pop-focus)
+)
 
 
 (defrule update-krow-kcol (declare (salience 40))
@@ -268,7 +440,7 @@
 	(printout t "I know that cell [" ?x ", " ?y "] contains " ?t "." crlf)
 )
 
-(defrule fire-highest-knum (declare (salience 30))
+(defrule fire-highest-knum (declare (salience 20))
 	(moves (fires ?nf & :(> ?nf 0)) (guesses ?ng))
 	(status (step ?s)(currently running))
 	?r1 <- (k-per-row (row ?r) (num ?num1)) 
@@ -283,32 +455,4 @@
 	(pop-focus)
 )
 
-(defrule fire-middle-border (declare (salience 30))
-	(status (step ?s)(currently running))
-	(k-cell (x ?x ) (y ?y & 0|9) (content middle))
-	(not (exec  (action guess) (x ?x1&:(= ?x1 (+ ?x 1))) (y ?y))) 
- =>
-	(assert (exec (step ?s) (action guess) (x (+ ?x 1)) (y ?y)))
-	(printout t "guessed [" ?x ", " ?y "]." crlf)
-	(pop-focus)
-) 
 
-
-(defrule inerzia0 (declare (salience 10))
-	(status (step ?s)(currently running))
-	(moves (fires 0) (guesses ?ng&:(> ?ng 0)))
-=>
-	(assert (exec (step ?s) (action guess) (x 0) (y 0)))
-	
-     (pop-focus)
-
-)
-
-(defrule inerzia0-bis (declare (salience 10))
-	(status (step ?s)(currently running))
-	(moves (guesses 0))
-=>
-	(assert (exec (step ?s) (action unguess) (x 0) (y 0)))
-     (pop-focus)
-
-)
