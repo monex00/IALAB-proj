@@ -19,6 +19,7 @@
 	(slot num) ;somma k per riga/colonna
 )
 
+
 (defrule init-num-cell (declare (salience 50))
 	(k-per-row (row ?r) (num ?n1))
 	(k-per-col (col ?c) (num ?n2))
