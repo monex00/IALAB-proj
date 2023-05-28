@@ -311,10 +311,11 @@
 )
 
 
-(defrule guess-middle-hor1 (declare (salience 40))
+(defrule guess-middle-hor1 (declare (salience 20))
 	(status (step ?s)(currently running))
 	(k-cell (x ?x & ~0 & ~9) (y ?y & ~0 & ~9) (content ?t & middle))
 	(not (exec (action guess) (x ?x) (y ?y1 &:(= ?y1 (- ?y 1) ))))
+	(not (k-cell (x ?x1 &: (= ?x1 ?x)) (y ?y1 &: (= ?y1 (- ?y 1))) (content ?t1 & water)))
 	(or
 		(not (exec (action guess) (x ?x1 &:(= ?x1 (- ?x 1) )) (y ?y )))
 		(not (exec (action guess) (x ?x1 &:(= ?x1 (+ ?x 1) )) (y ?y )))	
@@ -339,10 +340,12 @@
 	(pop-focus)
 )
 
-(defrule guess-middle-hor2 (declare (salience 40))
+(defrule guess-middle-hor2 (declare (salience 20))
 	(status (step ?s)(currently running))
 	(k-cell (x ?x & ~0 & ~9) (y ?y & ~0 & ~9) (content ?t & middle))
 	(not (exec (action guess) (x ?x) (y ?y1 &:(= ?y1 (+ ?y 1) ))))
+	(not (k-cell (x ?x1 &: (= ?x1 ?x)) (y ?y1 &: (= ?y1 (+ ?y 1))) (content ?t1 & water)))
+
 	(or
 		(not (exec (action guess) (x ?x1 &:(= ?x1 (- ?x 1) )) (y ?y )))
 		(not (exec (action guess) (x ?x1 &:(= ?x1 (+ ?x 1) )) (y ?y )))	
@@ -365,10 +368,11 @@
 	(pop-focus)
 )
 
-(defrule guess-middle-ver1 (declare (salience 40))
+(defrule guess-middle-ver1 (declare (salience 20))
 	(status (step ?s)(currently running))
 	(k-cell (x ?x & ~0 & ~9) (y ?y & ~0 & ~9) (content ?t & middle))
 	(not (exec (action guess) (x ?x1 &:(= ?x1 (- ?x 1) )) (y ?y )))
+	(not (k-cell (x ?x1 &: (= ?x1 (- ?x 1))) (y ?y) (content ?t1 & water)))
 	(or
 		(not (exec (action guess) (x ?x) (y ?y1 &:(= ?y1 (- ?y 1) ))))
 		(not (exec (action guess) (x ?x) (y ?y1 &:(= ?y1 (+ ?y 1) ))))
@@ -392,10 +396,11 @@
 	(pop-focus)
 )
 
-(defrule guess-middle-ver2 (declare (salience 40))
+(defrule guess-middle-ver2 (declare (salience 20))
 	(status (step ?s)(currently running))
 	(k-cell (x ?x & ~0 & ~9) (y ?y & ~0 & ~9) (content ?t & middle))
 	(not (exec (action guess) (x ?x1 &:(= ?x1 (+ ?x 1) )) (y ?y )))
+	(not (k-cell (x ?x1 &: (= ?x1 (+ ?x 1))) (y ?y) (content ?t1 & water)))
 	(or
 		(not (exec (action guess) (x ?x) (y ?y1 &:(= ?y1 (- ?y 1) ))))
 		(not (exec (action guess) (x ?x) (y ?y1 &:(= ?y1 (+ ?y 1) ))))
@@ -441,14 +446,14 @@
 	(printout t "I know that cell [" ?x ", " ?y "] contains " ?t "." crlf)
 )
 
-(defrule fire-highest-knum (declare (salience 20))
+(defrule fire-highest-knum (declare (salience 30))
 	(moves (fires ?nf & :(> ?nf 0)) (guesses ?ng))
 	(status (step ?s)(currently running))
 	?r1 <- (k-per-row (row ?r) (num ?num1)) 
 	?c1 <- (k-per-col (col ?c) (num ?num2)) 
-	(not(k-per-row (row ?r2 &: (neq ?r2 ?r)) (num ?n2 &:(> ?n2 ?num1 )))) 
-	(not(k-per-col (col ?c2 &: (neq ?c2 ?c)) (num ?n3 &:(> ?n3 ?num2 ))))
-	(not(k-cell (x ?r) (y ?c) (content ?t)))
+	(not (k-per-row (row ?r2 &: (neq ?r2 ?r)) (num ?n2 &:(> ?n2 ?num1 )))) 
+	(not (k-per-col (col ?c2 &: (neq ?c2 ?c)) (num ?n3 &:(> ?n3 ?num2 ))))
+	(not (k-cell (x ?r) (y ?c)))
 	(not (exec (action fire) (x ?r) (y ?c)))
  => 
 	(assert (exec (step ?s) (action fire) (x ?r) (y ?c)))
