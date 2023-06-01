@@ -28,13 +28,24 @@
 	(assert (num-cell (x ?r) (y ?c) (num (+ ?n1 ?n2))))
 )
 
-(defrule modif-num-cell (declare (salience 10))
+(defrule modif-num-cell-1 (declare (salience 10))
 	(k-per-row (row ?r) (num ?n1))
 	(k-per-col (col ?c) (num ?n2))
+	(not (num-cell (x ?r) (y ?c) (num ?num &: (= ?num 0))))
 	?cell <- (num-cell (x ?r) (y ?c) (num ?n3 &: (neq ?n3 (+ ?n1 ?n2))))
 =>
 	(retract ?cell)
 	(assert (num-cell (x ?r) (y ?c) (num (+ ?n1 ?n2))))
+)
+
+(defrule modif-num-cell-2 (declare (salience 10))
+	(or
+		(secure-guess (x ?r) (y ?c))
+		(k-cell (x ?r) (y ?c))
+	)
+	?r1 <- (num-cell (x ?r) (y ?c))
+=>
+	(modify ?r1 (num 0))
 )
 
 
@@ -446,6 +457,63 @@
 	(printout t "I know that cell [" ?x ", " ?y "] contains " ?t "." crlf)
 )
 
+
+(defrule known-guess-on-3-1 (declare (salience 40))
+	(status (step ?s)(currently running))
+	(k-cell (x ?x) (y ?y) (content ?t & top))
+	(secure-guess (x ?x5 &: (= ?x5 (+ ?x 1))) (y ?y))
+	(not (exec (action guess) (x ?x1 &: (= ?x1 (+ ?x 2))) (y ?y)))
+	(num-cell (x ?x3 &: (= ?x3 (+ ?x 2))) (y ?y) (num ?num3 &:(> ?num3 0)))
+	(not (num-cell (x ?x4 &: (neq ?x4 ?x3)) (y ?y) (num ?num4 &:(> ?num4 ?num3))))
+=> 
+	(assert (secure-guess (x (+ ?x 2)) (y ?y)))
+	(assert (exec (step ?s) (action guess) (x (+ ?x 2)) (y ?y)))
+	(pop-focus)
+)
+
+(defrule known-guess-on-3-2 (declare (salience 40))
+	(status (step ?s)(currently running))
+	(k-cell (x ?x) (y ?y) (content ?t & bot))
+	(secure-guess (x ?x5 &: (= ?x5 (- ?x 1))) (y ?y))
+	(not (exec (action guess) (x ?x1 &: (= ?x1 (- ?x 2))) (y ?y)))
+	(num-cell (x ?x3 &: (= ?x3 (- ?x 2))) (y ?y) (num ?num3 &:(> ?num3 0)))
+	(not (num-cell (x ?x4 &: (neq ?x4 ?x3)) (y ?y) (num ?num4 &:(> ?num4 ?num3))))
+=> 
+	(assert (secure-guess (x (- ?x 2)) (y ?y)))
+	(assert (exec (step ?s) (action guess) (x (- ?x 2)) (y ?y)))
+	(pop-focus)
+)
+
+
+(defrule known-guess-on-3-3 (declare (salience 40))
+	(status (step ?s)(currently running))
+	(k-cell (x ?x) (y ?y) (content ?t & right))
+	(secure-guess (x ?x) (y ?y5 &: (= ?y5 (- ?y 1))))
+	(not (exec (action guess) (x ?x) (y ?y1 &: (= ?y1 (- ?y 2)))))
+	(num-cell (x ?x) (y ?y3 &: (= ?y3 (- ?y 2))) (num ?num3 &:(> ?num3 0)))
+	(not (num-cell (x ?x) (y ?y4 &: (neq ?y4 ?y3)) (num ?num4 &:(> ?num4 ?num3))))
+
+=> 
+	(assert (secure-guess (x ?x) (y (- ?y 2))))
+	(assert (exec (step ?s) (action guess) (x ?x) (y (- ?y 2))))
+	(pop-focus)
+)
+
+(defrule known-guess-on-3-4 (declare (salience 40))
+	(status (step ?s)(currently running))
+	(k-cell (x ?x) (y ?y) (content ?t & left))
+	(secure-guess (x ?x) (y ?y5 &: (= ?y5 (+ ?y 1))))
+	(not (exec (action guess) (x ?x) (y ?y1 &: (= ?y1 (+ ?y 2)))))
+	(num-cell (x ?x) (y ?y3 &: (= ?y3 (+ ?y 2))) (num ?num3 &:(> ?num3 0)))
+	(not (num-cell (x ?x) (y ?y4 &: (neq ?y4 ?y3)) (num ?num4 &:(> ?num4 ?num3))))
+
+=> 
+	(assert (secure-guess (x ?x) (y (+ ?y 2))))
+	(assert (exec (step ?s) (action guess) (x ?x) (y (+ ?y 2))))
+	(pop-focus)
+)
+
+
 (defrule fire-highest-knum (declare (salience 30))
 	(moves (fires ?nf & :(> ?nf 0)) (guesses ?ng))
 	(status (step ?s)(currently running))
@@ -462,3 +530,23 @@
 )
 
 
+(defrule solve 
+	(status (step ?s)(currently running))
+	(moves (guesses ?ng &:(= ?ng 0)) (fires ?nf &:(= ?nf 0)))
+=>
+	(assert (exec (step ?s) (action solve)))
+	(pop-focus)
+)
+
+; TODO: capire perchè non funziona
+(defrule guess-highest-knum (declare (salience 5))
+	(moves (guesses ?nf & :(> ?nf 0)) (fires ?ng))
+	(status (step ?s)(currently running))
+	(num-cell (x ?x) (y ?y) (num ?num &:(> ?num 0)))
+	(not (num-cell (x ?x1) (y ?y1) (num ?num1 &:(> ?num1 ?num))))
+	(not (k-cell (x ?x) (y ?y)))
+	(not (exec (action guess) (x ?x) (y ?y)))
+ => 
+	(assert (exec (step ?s) (action guess) (x ?x) (y ?y)))
+	(pop-focus)
+)
