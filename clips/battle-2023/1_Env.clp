@@ -10,7 +10,7 @@
 
 
 (deftemplate boat-hor
-    (slot name)
+        (slot name)
 	(slot x)
 	(multislot ys)
 	(slot size)
@@ -229,9 +229,7 @@
 
 (deffunction scoring (?fok ?fko ?gok ?gko ?saf ?sink ?nf ?ng)
 
-	(- (- (+ (* ?fok 10) (* ?gok 10) (* ?sink 15) )  (+ (* ?fko 10) (* ?gko 10) (* ?saf 10)) )
-	 
-	   (+ (* ?nf 20) (* ?ng 20)) )
+	(- (+ (* ?gok 15) (* ?sink 20) )  (+ (* ?gko 10) (* ?saf 10) (* ?nf 20) (* ?ng 20) ))
 )
 
 	

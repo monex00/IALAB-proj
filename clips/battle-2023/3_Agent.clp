@@ -530,7 +530,7 @@
 )
 
 
-(defrule solve 
+(defrule solve (declare (salience 100))
 	(status (step ?s)(currently running))
 	(moves (guesses ?ng &:(= ?ng 0)) (fires ?nf &:(= ?nf 0)))
 =>
@@ -538,15 +538,15 @@
 	(pop-focus)
 )
 
-; TODO: capire perchè non funziona
 (defrule guess-highest-knum (declare (salience 5))
 	(moves (guesses ?nf & :(> ?nf 0)) (fires ?ng))
 	(status (step ?s)(currently running))
-	(num-cell (x ?x) (y ?y) (num ?num &:(> ?num 0)))
-	(not (num-cell (x ?x1) (y ?y1) (num ?num1 &:(> ?num1 ?num))))
+	?n1 <- (num-cell (x ?x) (y ?y) (num ?num &:(> ?num 0)))
+	(not (num-cell (x ?x1 & ~?x) (y ?y1 & ~?y) (num ?num1 &:(> ?num1 ?num))))
 	(not (k-cell (x ?x) (y ?y)))
 	(not (exec (action guess) (x ?x) (y ?y)))
  => 
 	(assert (exec (step ?s) (action guess) (x ?x) (y ?y)))
+	(modify ?n1 (num 0))
 	(pop-focus)
 )
