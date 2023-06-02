@@ -369,6 +369,3 @@
 	(printout t "I know that cell [" ?r ", " ?c "] is prob higher with num [" ?num1 ", " ?num2 "]" crlf) 
 	(pop-focus)
 )
-
-;problema? scriviamo unaltra regola del cazzo e teniamo le altre di merda letsgoooooooooooooooooo
-
