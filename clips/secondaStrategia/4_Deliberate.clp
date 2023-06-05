@@ -229,7 +229,7 @@
 		(k-per-col (col ?c) (num ?kcol &:(= ?kcol 0)))
 		(secure-guess (x ?r) (y ?c))
 		(exec (action ?a) (x ?r) (y ?c))
-		;(k-cell (x ?r) (y ?c) (content ?t & water))
+		(k-cell (x ?r) (y ?c) (content ?t & water))
 	)
 
 	?n <- (num-cell (x ?r) (y ?c) (cf ?n5 &: (neq ?n5 0)))
@@ -247,9 +247,11 @@
 	(not (secure-guess (x ?r) (y ?c)))
 	(not (exec (action ?a) (x ?r) (y ?c)))
 	(not (k-cell (x ?r) (y ?c) (content ?t & water)))
-	?n <- (num-cell (x ?r) (y ?c) (cf ?n5 &: (neq ?n5 (* (/ ?krow ?unkrow) (/ ?kcol ?unkcol)))))
+	;?n <- (num-cell (x ?r) (y ?c) (cf ?n5 &: (neq ?n5 (* (/ ?krow ?unkrow) (/ ?kcol ?unkcol)))))
+	?n <- (num-cell (x ?r) (y ?c) (cf ?n5 &: (neq ?n5 (/ (+ ?krow ?kcol) (+ ?unkrow ?unkcol)))))
 => 
 	(retract ?n)
-	(assert (num-cell (x ?r) (y ?c) (cf (* (/ ?krow ?unkrow) (/ ?kcol ?unkcol)))))
-	(printout t "CF1: " ?r " " ?c " " (* (/ ?krow ?unkrow) (/ ?kcol ?unkcol)) crlf)
+	;(assert (num-cell (x ?r) (y ?c) (cf (* (/ ?krow ?unkrow) (/ ?kcol ?unkcol)))))
+	(assert (num-cell (x ?r) (y ?c) (cf (/ (+ ?krow ?kcol) (+ ?unkrow ?unkcol)))))
+	;(printout t "CF1: " ?r " " ?c " " (* (/ ?krow ?unkrow) (/ ?kcol ?unkcol)) crlf)
 )

@@ -314,7 +314,6 @@
 	(not (exec (action guess) (x ?x) (y ?y1 &: (= ?y1 (- ?y 2)))))
 	(num-cell (x ?x) (y ?y3 &: (= ?y3 (- ?y 2))) (cf ?num3 &:(> ?num3 0.2)))
 	(not (num-cell (x ?x) (y ?y4 &: (neq ?y4 ?y3)) (cf ?num4 &:(> ?num4 ?num3))))
-
 => 
 	(assert (secure-guess (x ?x) (y (- ?y 2))))
 	(assert (exec (step ?s) (action guess) (x ?x) (y (- ?y 2))))
