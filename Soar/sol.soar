@@ -1,0 +1,95 @@
+rl -s learning on # enable RL
+indifferent-selection --epsilon-greedy # use epsilon-greedy decision making
+indifferent-selection --epsilon 0.1 # 10% deviation from greedy
+
+
+# Regola per proporre la combinazione di molla e rametto di legno
+sp {propose*molla-rametto
+   (state <s> ^superstate nil
+             -^name)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name molla-rametto)
+}
+
+# Regola per proporre la combinazione di pietre e rametto di legno
+sp {propose*pietre-rametto
+   (state <s> ^superstate nil
+             -^name)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name pietre-rametto)
+}
+
+# Regola per proporre la combinazione di pietre e molla
+sp {propose*pietre-molla
+   (state <s> ^superstate nil
+             -^name)
+-->
+   (<s> ^operator <o> +)
+   (<o> ^name pietre-molla)
+}
+
+# Regola per creare una nuova combinazione (molla + rametto di legno)
+sp {create*molla-rametto
+   (state <s> ^operator <op>)
+   (<op> ^name molla-rametto)
+-->
+   (<s> ^combinazione molla-rametto)
+}
+
+# Regola per creare una nuova combinazione (pietre + rametto di legno)
+sp {create*pietre-rametto
+   (state <s> ^operator <op>)
+   (<op> ^name pietre-rametto)
+-->
+   (<s> ^combinazione pietre-rametto)
+}
+
+# Regola per creare una nuova combinazione (pietre + molla)
+sp {create*pietre-molla
+   (state <s> ^operator <op>)
+   (<op> ^name pietre-molla)
+-->
+   (<s> ^combinazione pietre-molla)
+}
+
+# Regola per colpire la finestra
+sp {hit*finestra
+   (state <s> ^combinazione molla-rametto
+              ^location <loc>)
+   (<loc> ^name finestra ^height 3.5)
+-->
+   (<s> ^action hit-finestra)
+   (write (crlf) |Finestra colpita!|)
+   (<s> ^reward +1)
+}
+
+# Regola per colpire la finestra
+sp {hit*finestra
+   (state <s> ^combinazione pietre-rametto
+              ^location <loc>)
+   (<loc> ^name finestra ^height 3.5)
+-->
+   (<s> ^action hit-finestra)
+   (write (crlf) |Finestra colpita!|)
+   (<s> ^reward -1)
+}
+
+# Regola per colpire la finestra
+sp {hit*finestra
+   (state <s> ^combinazione pietre-molla
+              ^location <loc>)
+   (<loc> ^name finestra ^height 3.5)
+-->
+   (<s> ^action hit-finestra)
+   (write (crlf) |Finestra colpita!|)
+   (<s> ^reward -1)
+}
+
+# Regola per terminare l'esecuzione quando l'agente ha colpito la finestra
+sp {finish*escape
+   (state <s> ^action hit-finestra)
+-->
+   (halt)
+}

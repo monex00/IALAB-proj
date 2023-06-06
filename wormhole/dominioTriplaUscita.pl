@@ -9,7 +9,6 @@ finale(pos(1,7)).
 occupata(pos(3,3)).
 occupata(pos(3,4)).
 occupata(pos(3,5)).
-occupata(pos(4,3)).
 occupata(pos(4,5)).
 
 occupata(pos(5,3)).

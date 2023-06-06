@@ -1,1 +1,1 @@
-dx,dx,dx,su,tp,dx,dx
+dx,dx,su,su,tp,giu,giu,giu,dx,tp,giu,giu,dx,dx,dx,dx,dx,dx,tp,giu,giu,giu,giu,giu,giu,giu,giu,giu,giu,giu

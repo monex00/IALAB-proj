@@ -1,0 +1,143 @@
+rl -s learning on # enable RL
+indifferent-selection --epsilon-greedy # use epsilon-greedy decision making
+indifferent-selection --epsilon 0.1 # 10% deviation from greedy
+
+##
+#Si richiede di implementare un agente intelligente sviluppato 
+#tramite l’architettura cognitiva SOAR in grado di risolvere il seguente problema (per comodità 
+#nominato “ESCAPE”) tramite apprendimento per rinforzo (reinforcement learning). 
+#L’agente SOAR è prigioniero in un ambiente dove l’unica via d’uscita è una finestra in vetro posta a 3,5 
+#metri di altezza (l’agente è un robot di altezza 150 cm). La finestra in vetro è blindata ma ha un punto 
+#debole alle estremità. Questo vuol dire che, se colpita con precisione alle estremità, il vetro si può 
+#frantumare. Tuttavia l’agente all’inizio della sua esecuzione non lo sa e deve apprendere questa 
+#conoscenza. 
+#L’agente ha a disposizione i seguenti oggetti che potrebbero tornargli utili per realizzare il suo obiettivo: 
+#una molla, una rametto in legno, ciottoli e pietre. Due tronchi d’albero dello stesso diametro da 1 metro 
+#di altezza ciascuno. L’agente può decidere di creare nuovi oggetti a partire da quelli che ha a 
+#disposizione ma parte da una tabula rasa (non sa quale combinazione va bene). Nel corso dei suoi 
+#tentativi di interazione imparerà i seguenti rinforzi: (Molla + Rametto di legno) = +1 (Pietre + Rametto 
+#di legno) =-1 (Pietre + Molla) = -1 Altre possibili rinforzi frutto della vostra fantasia possono essere 
+#inseriti nel programma
+##
+
+# 1. definire un agente che ha a disposizione i seguenti oggetti:
+#   - molla
+#   - rametto in legno
+#   - ciottoli
+#   - pietre
+#   - due tronchi d'albero dello stesso diametro da 1 metro di altezza ciascuno
+
+# 2. l'agente deve apprendere che:
+#   - (molla + rametto di legno) = +1
+#   - (pietre + rametto di legno) = -1
+#   - (pietre + molla) = -1
+
+sp {propose*initialize*escape
+    (state <s> ^superstate nil
+               -^name)
+-->
+    (<s> ^operator <o> +)
+    (<o> ^name init-escape)
+}
+
+sp {apply*init-escape
+    (state <s> ^operator.name init-escape)
+-->
+    (<s> ^name escape
+         ^location start
+         ^combination <c1> <c2> <c3>
+         ^object <o1> <o2> <o3> <o4> <o5> <o6>
+    )
+    (<c1> ^name molla-rametto
+          ^reward 1)
+    (<c2> ^name pietre-rametto
+          ^reward -1)
+    (<c3> ^name pietre-molla
+          ^reward -1)
+    (<o1> ^name molla)
+    (<o2> ^name rametto)
+    (<o3> ^name ciottoli)
+    (<o4> ^name pietre)
+    (<o5> ^name tronco1)
+    (<o6> ^name tronco2) 
+}
+
+sp {escape*propose*combination
+    (state <s> ^name escape
+               ^location start
+               ^combination <c>)
+    (<c> ^name <comb-name>)
+-->
+    (<s> ^operator <o> +)
+    (<o> ^name propose-combination
+         ^comb-name <comb-name>)
+}
+
+sp {escape*rl*molla-rametto
+    (state <s> ^name escape
+               ^operator <op> +)
+    (<op> ^name propose-combination
+          ^comb-name molla-rametto)
+-->
+    (<s> ^operator <op> = 0)
+}
+
+sp {escape*rl*pietre-rametto
+    (state <s> ^name escape
+               ^operator <op> +)
+    (<op> ^name propose-combination
+          ^comb-name pietre-rametto)
+-->
+    (<s> ^operator <op> = 0)
+}
+
+sp {escape*rl*pietre-molla
+    (state <s> ^name escape
+               ^operator <op> +)
+    (<op> ^name propose-combination
+          ^comb-name pietre-molla)
+-->
+    (<s> ^operator <op> = 0)
+}
+
+# DOESN'T WORK  GENERIC VERSION OF PREVIOUS RULE 
+##
+#sp {escape*rl*generic
+#    (state <s> ^name escape
+#               ^operator <op> +)
+#    (<op> ^name propose-combination
+#          ^comb-name <comb-name>)
+#-->
+#    (<s> ^operator <op> = 0)
+#}
+##
+
+sp {apply*combination
+    (state <s> ^operator <op>
+               ^location start)
+    (<op> ^name propose-combination
+          ^comb-name <comb-name>)
+-->
+    (<s> ^location start - <comb-name>)
+    (write (crlf) |CHOSED: | <comb-name>)
+}
+
+
+sp {elaborate*reward
+    (state <s> ^name escape
+               ^reward-link <r>
+               ^location <c-name>
+                ^combination <c>)
+    (<c> ^name <c-name> ^reward <c-reward>)
+-->
+    (<r> ^reward <rr>)
+    (<rr> ^value <c-reward>)
+}
+
+
+sp {elaborate*done
+    (state <s> ^name escape
+               ^location {<> start})
+-->
+    (halt)
+}

@@ -11,10 +11,15 @@ def draw_maze(num_righe, num_colonne, pos_iniziale, pos_finali, celle_occupate, 
         maze[riga ][colonna ] = '#'
 
     # Disegno dei wormhole
+    wormholeIcons = [
+        '⊙', '◎', '◉', '◌', '◍', '◐', '◑', '◒', '◓', '◔', '◕', '◖', '◗', '◘', '◙', '◚', '◛', '◜', '◝', '◞', '◟', '◠', '◡', '◢', '◣', '◤', '◥', '◦', '◧', '◨', '◩', '◪', '◫', '◬', '◭', '◮', '◯', '◰', '◱', '◲', '◳', '◴', '◵', '◶', '◷', '◸', '◹', '◺', '◻', '◼', '◽', '◾', '◿'
+    ]
+    i = 0
     for wormhole in wormholes:
         inizio, fine = get_coordinate(wormhole[0]), get_coordinate(wormhole[1])
-        maze[inizio[0]][inizio[1]] = 'W'
-        maze[fine[0]][fine[1]] = 'W'
+        maze[inizio[0]][inizio[1]] = wormholeIcons[i]
+        maze[fine[0]][fine[1]] = wormholeIcons[i]
+        i += 1
 
     # Disegno delle pareti
     for riga in maze:
