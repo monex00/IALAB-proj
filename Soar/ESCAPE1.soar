@@ -46,7 +46,10 @@ sp {apply*init-escape
     (<s> ^name escape
          ^phase combination
          ^combination <c1> <c2> <c3> #<c4> <c5> <c6> <c7> <c8> <c9> <c10> <c11>
+         ^ramp <r1> <r2> <r3>
+         ^object <o1> <o2> <o3> <o4> <o5> <o6>
          ^chosedCombination nil
+         ^chosedRamp nil
          ^chosedThrow nil
          ^throws <t1> <t2>
          ^window <w>
@@ -58,6 +61,12 @@ sp {apply*init-escape
     (<c2> ^name pietre-rametto
           ^reward -1)
     (<c3> ^name pietre-molla
+          ^reward -1)
+    (<r1> ^name tronco1-tronco2
+        ^reward 1)
+    (<r2> ^name tronco1-pietre
+          ^reward -1)
+    (<r3> ^name pietre-tronco2
           ^reward -1)
     #(<c4> ^name tronco1-tronco2
     #      ^reward -1)
@@ -75,6 +84,13 @@ sp {apply*init-escape
     #    ^reward -1)
     #(<c11> ^name pietre-ciottoli
     #    ^reward -1)
+    (<o1> ^name tronco1)
+    (<o2> ^name tronco2)
+    (<o3> ^name ciottoli)
+    (<o4> ^name pietre)
+    (<o5> ^name rametto)
+    (<o6> ^name molla)
+
     (<t1> ^name border ^reward 1)
     (<t2> ^name center ^reward -1)
     (<w> ^status intact ^waeakness border)
@@ -202,14 +218,14 @@ sp {apply*throw
     (<op> ^name propose-throw
            ^throw-name <throw-name>)
 -->
-    (<s> ^chosedThrow <throw-name> ^phase action - final)
+    (<s> ^chosedThrow <throw-name> ^phase action - ramp)
     
     (write (crlf) |CHOSED throw: | <throw-name>)
 }
 
 sp {elaborate*reward-throw
     (state <s> ^name escape
-               ^phase final
+               ^phase ramp
                ^reward-link <r>
                ^chosedThrow <t-name>
                ^throws <t>)
@@ -222,12 +238,81 @@ sp {elaborate*reward-throw
 
 sp {change*window*status
     (state <s> ^name escape
-               ^phase final
+               ^phase ramp
                ^window <w>
                ^chosedThrow <t>)
     (<w> ^status intact ^waeakness <t>)
 -->
     (<w> ^status broken)
+}
+
+
+
+
+#RAMP PHASE
+sp {escape*propose*ramp*combination
+    (state <s> ^name escape
+               ^phase ramp
+               ^ramp <r>)
+    (<r> ^name <ramp-name>)
+-->
+    (<s> ^operator <o> +)
+    (<o> ^name propose-ramp-combination
+         ^ramp-name <ramp-name>)
+}
+
+sp {escape*rl*tronco1-tronco2-ramp
+    (state <s> ^name escape
+               ^phase ramp
+               ^operator <op> +)
+    (<op> ^name propose-ramp-combination
+          ^ramp-name tronco1-tronco2)
+-->
+    (<s> ^operator <op> = 0)
+}
+
+sp {escape*rl*tronco1-pietre-ramp
+    (state <s> ^name escape
+               ^phase ramp
+               ^operator <op> +)
+    (<op> ^name propose-ramp-combination
+          ^ramp-name tronco1-pietre)
+-->
+    (<s> ^operator <op> = 0)
+}
+
+sp {escape*rl*pietre-tronco2-ramp
+    (state <s> ^name escape
+               ^phase ramp
+               ^operator <op> +)
+    (<op> ^name propose-ramp-combination
+          ^ramp-name pietre-tronco2)
+-->
+    (<s> ^operator <op> = 0)
+}
+
+sp {apply*ramp*combination
+    (state <s> ^operator <op>
+               ^phase ramp)
+    (<op> ^name propose-ramp-combination
+          ^ramp-name <ramp-name>)
+-->
+    (<s> ^chosedRamp <ramp-name> ^phase ramp - final)
+    (write (crlf) |CHOSED: | <ramp-name>)
+}
+
+sp {elaborate*reward-ramp-combination
+    (state <s> ^name escape
+               ^phase final
+               ^reward-link <r>
+               ^chosedRamp <r-name>
+               ^ramp <ramp>)
+    (<ramp> ^name <r-name> ^reward <r-reward>)
+-->
+    (<r> ^reward <rr>)
+    (<rr> ^value <r-reward>)
+    (write (crlf) |ELABORO REWARD RAMP|)
+
 }
 
 sp {elaborate*done
