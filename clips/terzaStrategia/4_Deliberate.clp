@@ -1,33 +1,36 @@
 (defmodule DEL (import MAIN ?ALL) (import ENV ?ALL) (import AGENT ?ALL))
 
 
-(defrule init-num-cell (declare (salience 50))
-	(k-per-row (row ?r) (num ?n1))
-	(k-per-col (col ?c) (num ?n2))
+(defrule init-unk-per-row (declare (salience 50))
+	(k-per-row (row ?r))
+	(k-per-col (col ?c))
+	(not (unk-per-row (row ?r)))
+	(not (unk-per-col (col ?c)))
+=>
+	(assert (unk-per-row (row ?r) (num 10)))
+	(assert (unk-per-col (col ?c) (num 10)))
+)
+
+(defrule init-cf-cell (declare (salience 50))
+	(unk-per-row (row ?r))
+	(unk-per-col (col ?c))
 	(not (num-cell (x ?r) (y ?c)))
 =>
-	(assert (num-cell (x ?r) (y ?c) (num (+ ?n1 ?n2))))
+	(assert (num-cell (x ?r) (y ?c) (cf 0)))
 )
 
-(defrule modif-num-cell-1 (declare (salience 10))
-	(k-per-row (row ?r) (num ?n1))
-	(k-per-col (col ?c) (num ?n2))
-	(not (num-cell (x ?r) (y ?c) (num ?num &: (= ?num 0))))
-	?cell <- (num-cell (x ?r) (y ?c) (num ?n3 &: (neq ?n3 (+ ?n1 ?n2))))
-=>
-	(retract ?cell)
-	(assert (num-cell (x ?r) (y ?c) (num (+ ?n1 ?n2))))
-)
-
-(defrule modif-num-cell-2 (declare (salience 10))
+(defrule update-krow-kcol (declare (salience 45))
 	(or
-		(secure-guess (x ?r) (y ?c))
-		(k-cell (x ?r) (y ?c))
+		(secure-guess (x ?x) (y ?y))
+		(k-cell (x ?x) (y ?y) (content ?t & ~water))
 	)
-	?r1 <- (num-cell (x ?r) (y ?c) (num ?n &: (neq ?n 0)))
-=>
-	(retract ?r1)
-    (assert (num-cell (x ?r) (y ?c) (num 0)))
+	(not (modified (x ?x) (y ?y)))
+	?r <- (k-per-row (row ?x) (num ?nr & :(> ?nr 0)))
+	?c <- (k-per-col (col ?y) (num ?nc & :(> ?nc 0)))
+=>	
+	(modify ?r (num (- ?nr 1)))
+	(modify ?c (num (- ?nc 1)))
+	(assert (modified (x ?x) (y ?y)))
 )
 
 
@@ -201,21 +204,54 @@
 )
 
 
-(defrule update-krow-kcol (declare (salience 40))
-	(or
+(defrule modif-unk-per-row (declare (salience 39))
+	(or 
+		(k-cell (x ?x) (y ?y))
 		(secure-guess (x ?x) (y ?y))
-		(k-cell (x ?x) (y ?y) (content ?t & ~water))
 	)
-	(not (modified (x ?x) (y ?y)))
-	?r <- (k-per-row (row ?x) (num ?nr & :(> ?nr 0)))
-	?c <- (k-per-col (col ?y) (num ?nc & :(> ?nc 0)))
-=>	
-	(modify ?r (num (- ?nr 1)))
-	(modify ?c (num (- ?nc 1)))
-	(assert (modified (x ?x) (y ?y)))
+	(not (modified-per-unk (x ?x) (y ?y)))
+	?ur <- (unk-per-row (row ?x) (num ?n1))
+	?uc <- (unk-per-col (col ?y) (num ?n2))
+=>
+	(retract ?ur)
+	(retract ?uc)
+	(assert (unk-per-row (row ?x) (num (- ?n1 1))))
+	(assert (unk-per-col (col ?y) (num (- ?n2 1))))
+	(assert (modified-per-unk (x ?x) (y ?y)))
 )
 
-(defrule print-what-i-know-since-the-beginning
-	(k-cell (x ?x) (y ?y) (content ?t) )
-=>
+
+(defrule calc-cf-2 (declare (salience 38))
+	(or
+		(unk-per-row (row ?r) (num ?unkrow &:(= ?unkrow 0)))
+		(unk-per-col (col ?c) (num ?unkcol &:(= ?unkcol 0)))
+		(k-per-row (row ?r) (num ?krow &:(= ?krow 0)))
+		(k-per-col (col ?c) (num ?kcol &:(= ?kcol 0)))
+		(secure-guess (x ?r) (y ?c))
+		(exec (action ?a) (x ?r) (y ?c))
+		(k-cell (x ?r) (y ?c) (content ?t & water))
+	)
+
+	?n <- (num-cell (x ?r) (y ?c) (cf ?n5 &: (neq ?n5 0)))
+	
+=> 
+	(retract ?n)
+	(assert (num-cell (x ?r) (y ?c) (cf 0)))
+)
+
+(defrule calc-cf-1 (declare (salience 37))
+	(unk-per-row (row ?r) (num ?unkrow &:(> ?unkrow 0)))
+	(unk-per-col (col ?c) (num ?unkcol &:(> ?unkcol 0)))
+	(k-per-row (row ?r) (num ?krow &:(> ?krow 0)))
+	(k-per-col (col ?c) (num ?kcol &:(> ?kcol 0)))
+	(not (secure-guess (x ?r) (y ?c)))
+	(not (exec (action ?a) (x ?r) (y ?c)))
+	(not (k-cell (x ?r) (y ?c) (content ?t & water)))
+	;?n <- (num-cell (x ?r) (y ?c) (cf ?n5 &: (neq ?n5 (* (/ ?krow ?unkrow) (/ ?kcol ?unkcol)))))
+	?n <- (num-cell (x ?r) (y ?c) (cf ?n5 &: (neq ?n5 (/ (+ ?krow ?kcol) (+ ?unkrow ?unkcol)))))
+=> 
+	(retract ?n)
+	;(assert (num-cell (x ?r) (y ?c) (cf (* (/ ?krow ?unkrow) (/ ?kcol ?unkcol)))))
+	(assert (num-cell (x ?r) (y ?c) (cf (/ (+ ?krow ?kcol) (+ ?unkrow ?unkcol)))))
+	;(printout t "CF1: " ?r " " ?c " " (* (/ ?krow ?unkrow) (/ ?kcol ?unkcol)) crlf)
 )

@@ -1,0 +1,269 @@
+rl -s learning on # enable RL
+indifferent-selection --epsilon-greedy # use epsilon-greedy decision making
+indifferent-selection --epsilon 0.4 # 10% deviation from greedy
+
+##
+#Si richiede di implementare un agente intelligente sviluppato 
+#tramite l’architettura cognitiva SOAR in grado di risolvere il seguente problema (per comodità 
+#nominato “ESCAPE”) tramite apprendimento per rinforzo (reinforcement learning). 
+#L’agente SOAR è prigioniero in un ambiente dove l’unica via d’uscita è una finestra in vetro posta a 3,5 
+#metri di altezza (l’agente è un robot di altezza 150 cm). La finestra in vetro è blindata ma ha un punto 
+#debole alle estremità. Questo vuol dire che, se colpita con precisione alle estremità, il vetro si può 
+#frantumare. Tuttavia l’agente all’inizio della sua esecuzione non lo sa e deve apprendere questa 
+#conoscenza. 
+#L’agente ha a disposizione i seguenti oggetti che potrebbero tornargli utili per realizzare il suo obiettivo: 
+#una molla, una rametto in legno, ciottoli e pietre. Due tronchi d’albero dello stesso diametro da 1 metro 
+#di altezza ciascuno. L’agente può decidere di creare nuovi oggetti a partire da quelli che ha a 
+#disposizione ma parte da una tabula rasa (non sa quale combinazione va bene). Nel corso dei suoi 
+#tentativi di interazione imparerà i seguenti rinforzi: (Molla + Rametto di legno) = +1 (Pietre + Rametto 
+#di legno) =-1 (Pietre + Molla) = -1 Altre possibili rinforzi frutto della vostra fantasia possono essere 
+#inseriti nel programma
+##
+
+# 1. definire un agente che ha a disposizione i seguenti oggetti:
+#   - molla
+#   - rametto in legno
+#   - ciottoli
+#   - pietre
+#   - due tronchi d'albero dello stesso diametro da 1 metro di altezza ciascuno
+
+# 2. l'agente deve apprendere che:
+#   - (molla + rametto di legno) = +1
+#   - (pietre + rametto di legno) = -1
+#   - (pietre + molla) = -1
+#    - (tuttelealtre) = -1
+
+sp {propose*initialize*escape
+    (state <s> ^superstate nil
+               -^name)
+-->
+    (<s> ^operator <o> +)
+    (<o> ^name init-escape)
+}
+
+sp {apply*init-escape
+    (state <s> ^operator.name init-escape)
+-->
+    (<s> ^name escape
+         ^location start
+         ^combination nil
+         ^action nil
+         ^object <o1> <o2> <o3> <o4> <o5> <o6>
+         ^window <w>
+    )
+    (<o1> ^name tronco1)
+    (<o2> ^name tronco2)
+    (<o3> ^name ciottoli)
+    (<o4> ^name pietre)
+    (<o5> ^name rametto)
+    (<o6> ^name molla)
+    (<w> ^status integro ^weakness border ^possible-action center border)
+}
+
+sp {escape*propose*combination
+    (state <s> ^name escape
+               ^location start
+               ^object <o1> <o2>
+               )
+    #-{
+    #    (<s> ^operator <op>)
+    #    (<op> ^o1 <o2-name>)
+    #    (<op> ^o2 <o1-name>)
+    #}
+    (<o1> ^name <o1-name>)
+    (<o2> ^name <o2-name>)
+    (<o1> ^name {<> <o2-name>})
+    (<o2> ^name {<> <o1-name>})
+
+     
+-->
+    (<s> ^operator <o> +)
+    (<o> ^name propose-combination
+         ^o1 <o1-name>
+         ^o2 <o2-name>)
+    (write (crlf) |created: | (concat <o1-name> <o2-name>))
+
+}
+
+sp {escape*rl*molla-rametto
+    (state <s> ^name escape
+               ^operator <op> +)
+    (<op> ^name propose-combination
+          ^o1 molla
+          ^o2 rametto)
+-->
+    (<s> ^operator <op> = 0)
+}
+
+sp {escape*rl*rametto-molla
+    (state <s> ^name escape
+               ^operator <op> +)
+    (<op> ^name propose-combination
+          ^o1 rametto
+          ^o2 molla)
+-->
+    (<s> ^operator <op> = 0)
+}
+
+sp {escape*rl*bad-combination
+    (state <s> ^name escape
+               ^operator <op> +)
+    -{(<op> ^name propose-combination
+          ^o1 molla
+          ^o2 rametto)
+    }
+    -{(<op> ^name propose-combination
+          ^o1 rametto
+          ^o2 molla)
+    }
+-->
+    (<s> ^operator <op> = 0)
+}
+
+
+sp {apply*combination
+    (state <s> ^operator <op>
+               ^location start)
+    (<op> ^name propose-combination
+          ^o1 <o1-name>
+         ^o2 <o2-name>)
+-->
+    (<s> ^combination nil - <op> ^location start - combinato)
+    (write (crlf) |CHOSED: | (concat <o1-name> <o2-name>))
+}
+
+sp {elaborate*good-reward-1
+    (state <s> ^name escape
+               ^reward-link <r>
+                ^combination {<c> <> nil}
+                ^action nil)
+    (<c> ^o1 molla ^o2 rametto)
+-->
+    (<r> ^reward <rr>)
+    (<rr> ^value 1)
+    (write (crlf) |ELABORO GOOD COMB 1 |)
+}
+
+sp {elaborate*good-reward-2
+    (state <s> ^name escape
+               ^reward-link <r>
+                ^combination {<c> <> nil}
+                ^action nil)
+    (<c> ^o1 rametto ^o2 molla)
+-->
+    (<r> ^reward <rr>)
+    (<rr> ^value 1)
+    (write (crlf) |ELABORO GOOD COMB 2 |)
+}
+
+sp {elaborate*bad-reward
+    (state <s> ^name escape
+               ^reward-link <r>
+                ^combination {<c> <> nil}
+                ^action nil)
+    -{(<c> ^o1 molla ^o2 rametto)}
+    -{(<c> ^o1 rametto ^o2 molla)}
+-->
+    (<r> ^reward <rr>)
+    (<rr> ^value -1)
+    (write (crlf) |ELABORO BAD COMB |)
+}
+
+#per finestra
+
+sp {
+    escape*propose*window
+    (state <s> ^name escape
+               ^combination {<c> <> nil}
+               ^window <w>)
+    (<w> ^status {<> rotto} ^possible-action <az>)
+
+-->
+    (<s> ^operator <o> +)
+    (<o> ^name propose-action ^action <az>)
+    (write (crlf) |PROPOSE ACTION: | <az>)
+}
+
+sp {
+    escape*rl*window*border
+    (state <s> ^name escape
+               ^window <w>
+               ^operator <o> +
+               )	
+    (<o> ^name propose-action ^action border)
+-->
+    (<s> ^operator <o> = 0)
+}
+
+
+sp { escape*rl*window*center
+     (state <s> ^name escape
+               ^window <w>
+               ^operator <o> +
+               )	
+    (<o> ^name propose-action ^action center)
+-->
+    (<s> ^operator <op> = 0)
+}
+
+
+sp {
+    escape*apply*window
+    (state <s> ^name escape
+               ^window <w>
+               ^operator <o>
+               )	
+    (<o> ^name propose-action ^action <az>)    
+-->
+    (<s> ^action nil - <az>)
+    (write (crlf) |CHOSED ACTION: | <az>)
+}
+
+
+sp {elaborate*good-reward-window-1
+    (state <s> ^name escape
+               ^reward-link <r>
+                ^action {<a> <> nil}
+                ^window <w>)
+    (<w> ^status integro ^weakness <a>) #azione == waeakness
+-->
+    (<w> ^status integro - fragile)
+    (<r> ^reward <rr>)
+    (<rr> ^value 1)
+    (write (crlf) |ELABORO GOOD WINDOW 1 |)
+}
+
+sp {elaborate*good-reward-window-2
+    (state <s> ^name escape
+               ^reward-link <r>
+                ^action {<a> <> nil}
+                ^window <w>)
+    (<w> ^status fragile ^weakness <a>) #azione == waeakness
+-->
+    (<w> ^status fragile - rotto)
+    (<r> ^reward <rr>)
+    (<rr> ^value 1)
+    (write (crlf) |ELABORO GOOD WINDOW 2 |)
+}
+
+sp {elaborate*bad-reward-window
+    (state <s> ^name escape
+               ^reward-link <r>
+                ^action {<a> <> nil}
+                ^window <w>)
+    -{(<w> ^weakness <a>)}
+-->
+    (<r> ^reward <rr>)
+    (<rr> ^value -1)
+    (write (crlf) |ELABORO BAD WINDOW |)
+}
+
+
+sp {elaborate*done
+    (state <s> ^name escape
+                ^window <w>
+               ^action {<a> <> nil})
+-->
+    (write (crlf) |FINEEE: | <a>)
+    (halt)
+}

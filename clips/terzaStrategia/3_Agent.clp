@@ -5,12 +5,37 @@
 	(slot y)
 )
 
+(deftemplate modified-per-unk
+	(slot x)
+	(slot y)
+)
 
 (deftemplate secure-guess
 	(slot x)
 	(slot y)
 )
 
+(deftemplate num-cell
+	(slot x)
+	(slot y)
+    (slot cf)
+)
+
+(deftemplate num-cell-1
+	(slot x)
+	(slot y)
+	(slot num)
+)
+
+(deftemplate unk-per-row
+	(slot row)
+	(slot num)
+)
+
+(deftemplate unk-per-col
+	(slot col)
+	(slot num)
+)
 
 (defrule go-on-del  (declare (salience 30))
   (status (step ?s))
