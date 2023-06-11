@@ -1,0 +1,578 @@
+rl -s learning on # enable RL
+indifferent-selection --epsilon-greedy # use epsilon-greedy decision making
+indifferent-selection --epsilon 0.1 # 10% deviation from greedy
+
+##
+#Si richiede di implementare un agente intelligente sviluppato 
+#tramite l’architettura cognitiva SOAR in grado di risolvere il seguente problema (per comodità 
+#nominato “ESCAPE”) tramite apprendimento per rinforzo (reinforcement learning). 
+#L’agente SOAR è prigioniero in un ambiente dove l’unica via d’uscita è una finestra in vetro posta a 3,5 
+#metri di altezza (l’agente è un robot di altezza 150 cm). La finestra in vetro è blindata ma ha un punto 
+#debole alle estremità. Questo vuol dire che, se colpita con precisione alle estremità, il vetro si può 
+#frantumare. Tuttavia l’agente all’inizio della sua esecuzione non lo sa e deve apprendere questa 
+#conoscenza. 
+#L’agente ha a disposizione i seguenti oggetti che potrebbero tornargli utili per realizzare il suo obiettivo: 
+#una molla, una rametto in legno, ciottoli e pietre. Due tronchi d’albero dello stesso diametro da 1 metro 
+#di altezza ciascuno. L’agente può decidere di creare nuovi oggetti a partire da quelli che ha a 
+#disposizione ma parte da una tabula rasa (non sa quale combinazione va bene). Nel corso dei suoi 
+#tentativi di interazione imparerà i seguenti rinforzi: (Molla + Rametto di legno) = +1 (Pietre + Rametto 
+#di legno) =-1 (Pietre + Molla) = -1 Altre possibili rinforzi frutto della vostra fantasia possono essere 
+#inseriti nel programma
+##
+
+# 1. definire un agente che ha a disposizione i seguenti oggetti:
+#   - molla
+#   - rametto in legno
+#   - ciottoli
+#   - pietre
+#   - due tronchi d'albero dello stesso diametro da 1 metro di altezza ciascuno
+
+# 2. l'agente deve apprendere che:
+#   - (molla + rametto di legno) = +1
+#   - (pietre + rametto di legno) = -1
+#   - (pietre + molla) = -1
+
+sp {propose*initialize*escape
+    (state <s> ^superstate nil
+               -^name)
+-->
+    (<s> ^operator <o> +)
+    (<o> ^name init-escape)
+}
+
+sp {apply*init-escape
+    (state <s> ^operator.name init-escape)
+-->
+    (<s> ^name escape
+         ^phase combination
+         ^combination <c1> <c2> <c3> #<c4> <c5> <c6> <c7> <c8> <c9> <c10> <c11>
+         ^ramp <r1> <r2> <r3>
+         ^object <o1> <o2> <o3> <o4> <o5> <o6>
+         ^chosedCombination nil
+         ^chosedRamp nil
+         ^chosedThrow nil
+         ^rethrow nil
+         ^throws <t1> <t2>
+         ^window <w>
+         ^hittable nil
+         ^position nil
+         ^possiblePosition up down
+         )
+    
+    #creo le combinazioni per ogni oggetto
+    (<c1> ^name molla-rametto
+          ^reward 1)
+    (<c2> ^name pietre-rametto
+          ^reward -1)
+    (<c3> ^name pietre-molla
+          ^reward -1)
+    (<r1> ^name tronco1-tronco2
+        ^reward 1)
+    (<r2> ^name tronco1-pietre
+          ^reward -1)
+    (<r3> ^name pietre-tronco2
+          ^reward -1)
+    
+    (<o1> ^name molla ^possible-comb rametto pietre tronco1 tronco2 ciottoli)
+    (<o2> ^name rametto ^possible-comb pietre tronco1 tronco2 ciottoli)
+    (<o3> ^name pietre ^possible-comb tronco1 tronco2 ciottoli)
+    (<o4> ^name ciottoli ^possible-comb tronco1 tronco2)
+    (<o5> ^name tronco1  ^possible-comb tronco2)
+    (<o6> ^name tronco2)
+    
+    (<t1> ^name border ^reward 1)
+    (<t2> ^name center ^reward -1)
+    (<w> ^hit 0 ^weakness border ^life 2)
+}
+
+sp {escape*propose*combination
+   (state <s> ^name escape
+                ^phase combination
+              ^object <o1> 
+              )
+    (<o1> ^name <o1-name>)
+    (<o1> ^possible-comb <o2-name>)
+  
+-->
+    (<s> ^operator <o> +)
+    (<o> ^name propose-combination
+        ^comb-name (concat <o1-name> |-| <o2-name>)
+         ^o1 <o1-name>
+         ^o2 <o2-name>)
+   (write (crlf) |PROPOSED COMB: | <o1-name> <o2-name>)
+}
+
+
+sp {escape*rl*combinations
+    :template
+    (state <s> ^name escape
+               ^operator <op> + )
+    (<op> ^name propose-combination
+       ^o1 <o1-name>
+       ^o2 <o2-name>
+    )
+-->
+    (<s> ^operator <op> = 0)
+}
+
+
+sp {apply*combination
+    (state <s> ^operator <op>
+               ^phase combination)
+    (<op> ^name propose-combination
+          ^comb-name <comb-name>)
+-->
+    (<s> ^chosedCombination nil - <comb-name> ^phase combination - ramp)
+    
+    (write (crlf) |CHOSED: | <comb-name>)
+}
+
+sp {elaborate*reward-combination-good
+    (state <s> ^name escape
+               ^phase ramp
+               ^reward-link <r>
+               ^chosedCombination molla-rametto)
+-->
+    (<r> ^reward <rr>)
+    (<rr> ^value 1)
+    (write (crlf) |ELABORO REWARD COMB GOOD|)
+
+}
+
+sp {elaborate*reward-combination-good-1
+    (state <s> ^name escape
+               ^phase ramp
+               ^reward-link <r>
+               ^chosedCombination rametto-pietre)
+-->
+    (<r> ^reward <rr>)
+    (<rr> ^value 1)
+    (write (crlf) |ELABORO REWARD COMB GOOD|)
+
+}
+
+sp {elaborate*reward-combination-bad
+    (state <s> ^name escape
+               ^phase ramp
+               ^reward-link <r>
+               -^chosedCombination molla-rametto
+               -^chosedCombination rametto-pietre
+               )
+  
+-->
+    (<r> ^reward <rr>)
+    (<rr> ^value -2)
+    (write (crlf) |ELABORO REWARD COMB BAD|)
+
+}
+
+
+#RAMP PHASE
+sp {escape*propose*ramp*combination
+    (state <s> ^name escape
+               ^phase ramp
+               ^ramp <r>)
+    (<r> ^name <ramp-name>)
+-->
+    (<s> ^operator <o> +)
+    (<o> ^name propose-ramp-combination
+         ^ramp-name <ramp-name>)
+}
+
+sp {escape*rl*tronco1-tronco2-ramp
+    (state <s> ^name escape
+               ^phase ramp
+               ^operator <op> +)
+    (<op> ^name propose-ramp-combination
+          ^ramp-name tronco1-tronco2)
+-->
+    (<s> ^operator <op> = 0)
+}
+
+sp {escape*rl*tronco1-pietre-ramp
+    (state <s> ^name escape
+               ^phase ramp
+               ^operator <op> +)
+    (<op> ^name propose-ramp-combination
+          ^ramp-name tronco1-pietre)
+-->
+    (<s> ^operator <op> = 0)
+}
+
+sp {escape*rl*pietre-tronco2-ramp
+    (state <s> ^name escape
+               ^phase ramp
+               ^operator <op> +)
+    (<op> ^name propose-ramp-combination
+          ^ramp-name pietre-tronco2)
+-->
+    (<s> ^operator <op> = 0)
+}
+
+sp {apply*ramp*combination
+    (state <s> ^operator <op>
+               ^phase ramp)
+    (<op> ^name propose-ramp-combination
+          ^ramp-name <ramp-name>)
+-->
+    (<s> ^chosedRamp nil - <ramp-name> ^phase ramp - deliberate)
+    (write (crlf) |CHOSED: | <ramp-name>)
+}
+
+sp {elaborate*reward-ramp-combination
+    (state <s> ^name escape
+               ^phase deliberate
+               ^reward-link <r>
+               ^chosedRamp <r-name>
+               ^ramp <ramp>)
+    (<ramp> ^name <r-name> ^reward <r-reward>)
+-->
+    (<r> ^reward <rr>)
+    (<rr> ^value <r-reward>)
+    (write (crlf) |ELABORO REWARD RAMP|)
+
+}
+
+#scelta up o down
+
+sp {
+    propose*up-down
+    (state <s> ^name escape
+               ^phase deliberate
+               ^ramp <r>
+               ^possiblePosition <pos>)
+    -->
+    (<s> ^operator <o> +)
+    (<o> ^name propose-up-down
+            ^pos <pos>)
+}
+
+
+sp {escape*rl*up
+    (state <s> ^name escape
+               ^phase deliberate
+               ^operator <op> +)
+    (<op> ^name propose-up-down
+          ^pos up)
+-->
+    (<s> ^operator <op> = 0)
+}
+
+sp {escape*rl*down
+    (state <s> ^name escape
+               ^phase deliberate
+               ^operator <op> +)
+    (<op> ^name propose-up-down
+          ^pos down)
+-->
+    (<s> ^operator <op> = 0)
+}
+
+sp {apply*up-down
+    (state <s> ^operator <op>
+               ^phase deliberate)
+    (<op> ^name propose-up-down
+          ^pos <pos>)
+-->
+    (<s> ^position nil - <pos> ^phase deliberate - hit)
+    (write (crlf) |CHOSED: | <pos>)
+}
+
+sp {elaborate*reward*down*good
+    (state <s> ^name escape
+               ^phase hit
+               ^reward-link <r>
+               ^position down
+               ^chosedCombination molla-rametto)
+-->
+    (<r> ^reward <rr>)
+    (<rr> ^value 1)
+    
+    (write (crlf) |ELABORO REWARD DOWN GOOD HITTABLE YES|)
+}
+
+sp {elaborate*reward*up*good
+    (state <s> ^name escape
+               ^phase hit
+
+               ^reward-link <r>
+               ^position up
+               ^chosedCombination rametto-pietre)
+-->
+    (<r> ^reward <rr>)
+    (<rr> ^value 1)
+    (write (crlf) |ELABORO REWARD UP GOOD|)
+}
+
+sp {propose*hittable*yes-1
+    (state <s> ^name escape
+               ^phase hit
+               ^hittable nil      
+               ^position down
+               ^chosedCombination molla-rametto)
+-->
+    (<s> ^operator <o> + )
+    (<o> ^name propose-hittable-yes)
+    (write (crlf) |PROPOSING HITTABLE YES|)
+}
+
+sp {propose*hittable*yes-2
+    (state <s> ^name escape
+               ^phase hit
+               ^hittable nil      
+               ^position up
+               ^chosedCombination rametto-pietre)
+-->
+    (<s> ^operator <o> + )
+    (<o> ^name propose-hittable-yes)
+    (write (crlf) |PROPOSING HITTABLE YES|)
+}
+
+sp {rl*hittable*yes
+    (state <s> ^name escape
+               ^phase hit
+               ^operator <op1> + 
+               ^operator <op2> +)
+    (<op1> ^name propose-hittable-yes)
+    (<op2> ^name propose-throw )
+--> 
+    (<s> ^operator <op1> > <op2>)
+    (write (crlf) |SETTING PRIO|)
+}
+
+sp {apply*hittable*yes
+    (state <s> ^name escape 
+               ^operator <op>
+                #^hittable nil 
+               ^phase hit)
+    (<op> ^name propose-hittable-yes)
+-->
+    (<s> ^hittable nil - yes)
+    (write (crlf) |APPLPING HITTABLE YES| yes)    
+}
+
+sp {elaborate*reward*down*bad
+    (state <s> ^name escape
+               ^phase hit
+               ^reward-link <r>
+               ^position down
+               ^chosedCombination rametto-pietre)
+    
+    
+-->
+    (<r> ^reward <rr>)
+    (<rr> ^value -1)
+    (write (crlf) |ELABORO REWARD DOWN BAD|)
+}
+
+sp {elaborate*reward*up*bad
+    (state <s> ^name escape
+               ^phase hit
+               ^reward-link <r>
+               ^position up
+               ^chosedCombination molla-rametto )
+-->
+    (<r> ^reward <rr>)
+    (<rr> ^value -1)
+    (write (crlf) |ELABORO REWARD UP BAD|)
+}
+
+sp {elaborate*reward*neutral
+    (state <s> ^name escape
+               ^phase hit
+               ^reward-link <r>
+               -^chosedCombination rametto-pietre
+               -^chosedCombination molla-rametto
+               )
+-->
+    (<r> ^reward <rr>)
+    (<rr> ^value 0)
+    (write (crlf) |ELABORO REWARD NEUTRAL|)
+}
+
+
+#START THROW PHASE
+
+sp {escape*propose*throws
+    (state <s> ^name escape
+               ^phase hit
+               ^throws <t>
+                )
+    (<t> ^name <throw-name>)
+-->
+    (<s> ^operator <o> +)
+    (<o> ^name propose-throw
+         ^throw-name <throw-name>)
+}
+
+sp {escape*rl*border
+    (state <s> ^name escape
+               ^phase hit
+               ^operator <op> +)
+    (<op> ^name propose-throw
+          ^throw-name border)
+-->
+    (<s> ^operator <op> = 0)
+}
+
+sp {escape*rl*center
+    (state <s> ^name escape
+               ^phase hit
+               ^operator <op> +)
+    (<op> ^name propose-throw
+          ^throw-name center)
+-->
+    (<s> ^operator <op> = 0)
+}
+
+sp {apply*throw*good
+    (state <s> ^operator <op>
+               ^phase hit
+               ^window <w>
+               -^window.life 0 
+                ^chosedThrow nil
+                ^hittable yes
+               )
+               
+    (<op> ^name propose-throw
+           ^throw-name <throw-name>)
+    (<w> ^weakness <throw-name> ^life <life> ^hit <hit>)
+-->
+    (<s> ^chosedThrow nil - <throw-name> ^window <w> - <newW> ^phase hit - rethrow)
+    (<newW> ^life (- <life> 1) ^weakness <throw-name> ^hit <hit>)
+    (write (crlf) |CHOSED FIRST throw: | <throw-name>)
+}
+
+
+sp {apply*throw*bad
+    (state <s> ^operator <op>
+               ^phase hit
+               ^window <w> 
+               -^window.hit 2
+               -^window.weakness <throw-name>
+               ^chosedThrow nil
+                ^hittable yes
+               )
+               
+    (<op> ^name propose-throw
+           ^throw-name <throw-name>)
+    (<w> ^hit <hit> ^life <life> ^weakness <weak>)
+-->
+    (<s> ^chosedThrow nil - <throw-name> ^window <w> - <newW> ^phase hit - rethrow)
+    (<newW> ^hit (+ <hit> 1) ^weakness <weak> ^life <life>)
+    (write (crlf) |CHOSED FIRST bad throw: | <throw-name>)
+}
+
+sp {apply*throw*no*hittable
+    (state <s> ^operator <op>
+               ^phase hit
+                ^chosedThrow nil
+                ^hittable nil
+               )        
+    (<op> ^name propose-throw
+           ^throw-name <throw-name>)
+-->
+    (<s> ^chosedThrow nil - <throw-name> ^phase hit - rethrow)
+    (write (crlf) |NO HITTABLE CHOSED FIRST throw: | <throw-name>)
+}
+
+sp {elaborate*reward-throw
+    (state <s> ^name escape
+               ^phase rethrow
+               ^reward-link <r>
+               ^chosedThrow <t-name>
+               ^throws <t>)
+    (<t> ^name <t-name> ^reward <t-reward>)
+-->
+    (<r> ^reward <rr>)
+    (<rr> ^value <t-reward>)
+    (<s> ^phase rethrow - end)
+    (write (crlf) |ELABORO REWARD THROW| <t-name> |:| <t-reward>)
+}
+
+sp {apply*throw-1
+    (state <s>  ^name escape
+               ^phase end
+               ^window <w>
+                -^window.life 0 
+               ^chosedThrow <throw-name>
+               ^hittable yes
+               )
+               
+    (<w> ^weakness <throw-name> ^life <life> ^hit <hit>)
+-->
+    (<s> ^window <w> - <newW> ^rethrow <newOp> - nil  ^phase end - final)
+    (<newW> ^life (- <life> 1) ^weakness <throw-name> ^hit <hit>)
+    (write (crlf) |CHOSED SECOND throw: | <throw-name>)
+}
+
+
+sp {apply*throw*bad-1
+    (state <s>  ^name escape
+               ^phase end
+               ^window <w> 
+               -^window.hit 2
+               -^window.weakness <throw-name>
+                ^chosedThrow <throw-name>
+                ^hittable yes
+               )              
+    (<w> ^hit <hit> ^life <life> ^weakness <weak>)
+-->
+    (<s> ^window <w> - <newW> ^phase end - final)
+    (<newW> ^hit (+ <hit> 1) ^weakness <weak> ^life <life>)
+    (write (crlf) |CHOSED SECOND bad throw: | <throw-name>)
+}
+
+#sp {apply*throw*no*hittable-1
+#    (state <s>  ^name escape
+#               ^phase end 
+#                ^hittable nil
+#               )              
+#-->
+#    (<s> ^phase end - final ^hittable done)
+#    (write (crlf) |NO HITTABLE CHOSED SECOND | )
+#}
+
+
+sp {elaborate*done*good
+    (state <s> ^name escape
+               ^phase final
+               ^hittable yes
+               ^window <w>)
+    (<w> ^hit <hit> ^life <life>)
+-->
+    (write (crlf) |FINISCHED GOOD WITH LIFE | <life> | AND HIT | <hit>)
+    (halt)
+}
+
+sp {elaborate*done*bad
+    (state <s> ^name escape
+                ^phase end
+                ^hittable nil)
+-->
+    (write (crlf) |FINISCHED BAD |)
+    (halt)
+}
+
+#sp {elaborate*done*bad
+#    (state <s> ^name escape
+#                ^phase final
+#-->
+#    (write (crlf) |FINISCHED BAD 2 WITH LIFE | <life> | AND HIT | <hit>)
+#    (halt)
+#}
+
+#sp {elaborate*done
+#    (state <s> ^name escape
+#               ^window <w> ^life 0)
+#-->
+#    (halt)
+#}
+#
+#sp {elaborate*done*1
+#    (state <s> ^name escape
+#               ^window <w> ^hit 2)
+#-->
+#    (halt)
+#}
+
